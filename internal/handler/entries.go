@@ -15,7 +15,8 @@ func (h *Handler) ListEntries(ctx context.Context, request api.ListEntriesReques
 		return nil, err
 	}
 
-	defer tx.Rollback()
+	defer database.Rollback(tx)
+
 	qtx := h.queries.WithTx(tx)
 
 	params := database.ListEntriesParams{Limit: -1}
@@ -94,16 +95,16 @@ func (h *Handler) UpdateEntry(ctx context.Context, request api.UpdateEntryReques
 		return nil, err
 	}
 
-	defer tx.Rollback()
+	defer database.Rollback(tx)
 
 	qtx := h.queries.WithTx(tx)
 
 	if _, err := qtx.GetEntry(ctx, int64(request.Id)); err != nil {
 		if err == sql.ErrNoRows {
 			return api.UpdateEntry404JSONResponse{Message: "Entry not found"}, nil
-		} else {
-			return nil, err
 		}
+
+		return nil, err
 	}
 
 	var hasRead int64

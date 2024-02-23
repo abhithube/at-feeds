@@ -33,11 +33,11 @@ func (m *Manager) Preprocess(ctx context.Context, feedURL *url.URL) (*http.Reque
 	return http.NewRequestWithContext(ctx, http.MethodGet, feedURL.String(), nil)
 }
 
-func (m *Manager) Download(ctx context.Context, req *http.Request) (*http.Response, error) {
+func (m *Manager) Download(_ context.Context, req *http.Request) (*http.Response, error) {
 	return m.httpClient.Do(req)
 }
 
-func (j *Manager) Parse(ctx context.Context, resp *http.Response) (*parser.Feed, error) {
+func (m *Manager) Parse(_ context.Context, resp *http.Response) (*parser.Feed, error) {
 	defer resp.Body.Close()
 
 	parsedURL := resp.Request.URL
@@ -60,7 +60,7 @@ func (j *Manager) Parse(ctx context.Context, resp *http.Response) (*parser.Feed,
 		}
 
 		feedURL = parser.Attr(n, "href")
-		resp, err := j.httpClient.Get(feedURL)
+		resp, err := m.httpClient.Get(feedURL)
 		if err != nil {
 			return nil, err
 		}
@@ -97,7 +97,7 @@ func (j *Manager) Parse(ctx context.Context, resp *http.Response) (*parser.Feed,
 	return nil, errors.New(msg)
 }
 
-func (m *Manager) Postprocess(ctx context.Context, feed *parser.Feed) error {
+func (m *Manager) Postprocess(_ context.Context, feed *parser.Feed) error {
 	if len(feed.Entries) > 0 && feed.Entries[0].ThumbnailURL == "" {
 		return parser.NewThumbnailDescriptionProcessor().Postprocess(feed)
 	}
@@ -111,7 +111,8 @@ func (m *Manager) Save(ctx context.Context, feed *parser.Feed) (*database.Feed, 
 		return nil, err
 	}
 
-	defer tx.Rollback()
+	defer database.Rollback(tx)
+
 	qtx := m.queries.WithTx(tx)
 
 	var url sql.NullString
@@ -154,8 +155,7 @@ func (m *Manager) Save(ctx context.Context, feed *parser.Feed) (*database.Feed, 
 			FeedID:       inserted.ID,
 		}
 
-		err = qtx.UpsertEntry(ctx, params)
-		if err != nil {
+		if err = qtx.UpsertEntry(ctx, params); err != nil {
 			return nil, err
 		}
 	}

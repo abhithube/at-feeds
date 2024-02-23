@@ -24,16 +24,16 @@ type opmlBody struct {
 type opmlOutline struct {
 	Type    string `xml:"type,attr"`
 	Text    string `xml:"text,attr"`
-	HtmlURL string `xml:"htmlUrl,attr"`
+	HTMLURL string `xml:"htmlUrl,attr"`
 	Title   string `xml:"title,attr"`
-	XmlURL  string `xml:"xmlUrl,attr"`
+	XMLURL  string `xml:"xmlUrl,attr"`
 }
 
 func NewOPMLManager() *OPMLManager {
 	return &OPMLManager{}
 }
 
-func (m *OPMLManager) Import(data []byte) ([]BackupItem, error) {
+func (m *OPMLManager) Import(data []byte) ([]Item, error) {
 	var doc opmlDocument
 
 	if err := xml.Unmarshal(data, &doc); err != nil {
@@ -42,13 +42,13 @@ func (m *OPMLManager) Import(data []byte) ([]BackupItem, error) {
 
 	outlines := doc.Body.Outline
 
-	items := make([]BackupItem, len(outlines))
+	items := make([]Item, len(outlines))
 
 	for i := range outlines {
 		outline := outlines[i]
-		item := BackupItem{
-			URL:   outline.XmlURL,
-			Link:  outline.HtmlURL,
+		item := Item{
+			URL:   outline.HTMLURL,
+			Link:  outline.XMLURL,
 			Title: outline.Title,
 		}
 		items[i] = item
@@ -57,7 +57,7 @@ func (m *OPMLManager) Import(data []byte) ([]BackupItem, error) {
 	return items, nil
 }
 
-func (m *OPMLManager) Export(items []BackupItem) ([]byte, error) {
+func (m *OPMLManager) Export(items []Item) ([]byte, error) {
 	outlines := make([]opmlOutline, len(items))
 
 	for i := range items {
@@ -65,9 +65,9 @@ func (m *OPMLManager) Export(items []BackupItem) ([]byte, error) {
 		outline := opmlOutline{
 			Type:    "rss",
 			Text:    item.Title,
-			HtmlURL: item.Link,
+			HTMLURL: item.Link,
 			Title:   item.Title,
-			XmlURL:  item.URL,
+			XMLURL:  item.URL,
 		}
 		outlines[i] = outline
 	}

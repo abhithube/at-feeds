@@ -1,13 +1,13 @@
 package backup
 
-type BackupItem struct {
+type Item struct {
 	URL   string
 	Link  string
 	Title string
 }
 
-type BackupManager interface {
-	Import([]byte) ([]BackupItem, error)
+type Manager interface {
+	Import([]byte) ([]Item, error)
 
-	Export([]BackupItem) ([]byte, error)
+	Export([]Item) ([]byte, error)
 }

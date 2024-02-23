@@ -39,8 +39,7 @@ func (w *Worker) RunAll(ctx context.Context, feedURLs []string) error {
 
 			log.Printf("Starting %s...\n", url)
 
-			_, err := w.Run(ctx, url)
-			if err == nil {
+			if _, err := w.Run(ctx, url); err == nil {
 				log.Printf("Finished %s!\n", url)
 			} else {
 				log.Printf("%s: %s", url, err)

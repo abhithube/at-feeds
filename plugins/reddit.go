@@ -19,10 +19,10 @@ func (p *redditPlugin) Preprocess(ctx context.Context, feedURL *url.URL) (*http.
 	return http.NewRequestWithContext(ctx, http.MethodGet, feedURL.String(), nil)
 }
 
-func (p *redditPlugin) Parse(ctx context.Context, resp *http.Response) (*parser.Feed, error) {
+func (p *redditPlugin) Parse(_ context.Context, _ *http.Response) (*parser.Feed, error) {
 	return nil, nil
 }
 
-func (p *redditPlugin) Postprocess(ctx context.Context, feed *parser.Feed) error {
+func (p *redditPlugin) Postprocess(_ context.Context, _ *parser.Feed) error {
 	return nil
 }

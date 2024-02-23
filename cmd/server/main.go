@@ -46,8 +46,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	err = migrations.Migrate(db)
-	if err != nil {
+	if err = migrations.Migrate(db); err != nil {
 		log.Fatal(err)
 	}
 
@@ -85,32 +84,37 @@ func main() {
 		log.Println("Initializing refresh job...")
 
 		c := cron.New()
-		c.AddFunc("*/15 * * * *", func() {
-			ctx := context.Background()
+		if _, err = c.AddFunc("*/15 * * * *", func() { cronHandler(queries, worker) }); err != nil {
+			log.Fatal(err)
+		}
 
-			feeds, err := queries.ListFeeds(ctx, database.ListFeedsParams{Limit: -1})
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			urls := make([]string, len(feeds))
-			for i, feed := range feeds {
-				urls[i] = feed.Link
-				if feed.Url.Valid {
-					urls[i] = feed.Url.String
-				}
-			}
-
-			if err := worker.RunAll(ctx, urls); err != nil {
-				log.Fatal(err)
-			}
-		})
 		c.Start()
 	}
 
 	log.Printf("Starting server at address %s\n", httpServer.Addr)
 
 	if err := httpServer.ListenAndServe(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func cronHandler(queries *database.Queries, worker *task.Worker) {
+	ctx := context.Background()
+
+	feeds, err := queries.ListFeeds(ctx, database.ListFeedsParams{Limit: -1})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	urls := make([]string, len(feeds))
+	for i, feed := range feeds {
+		urls[i] = feed.Link
+		if feed.Url.Valid {
+			urls[i] = feed.Url.String
+		}
+	}
+
+	if err := worker.RunAll(ctx, urls); err != nil {
 		log.Fatal(err)
 	}
 }

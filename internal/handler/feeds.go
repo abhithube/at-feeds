@@ -17,7 +17,8 @@ func (h *Handler) ListFeeds(ctx context.Context, request api.ListFeedsRequestObj
 		return nil, err
 	}
 
-	defer tx.Rollback()
+	defer database.Rollback(tx)
+
 	qtx := h.queries.WithTx(tx)
 
 	params := database.ListFeedsParams{Limit: -1}
@@ -64,9 +65,9 @@ func (h *Handler) GetFeed(ctx context.Context, request api.GetFeedRequestObject)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return api.GetFeed404JSONResponse{Message: "Feed not found"}, nil
-		} else {
-			return nil, err
 		}
+
+		return nil, err
 	}
 
 	entryCount := int(result.Entrycount)
@@ -111,9 +112,9 @@ func (h *Handler) DeleteFeed(ctx context.Context, request api.DeleteFeedRequestO
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return api.DeleteFeed404JSONResponse{Message: "Feed not found"}, nil
-		} else {
-			return nil, err
 		}
+
+		return nil, err
 	}
 
 	return api.DeleteFeed204Response{}, nil
@@ -154,24 +155,26 @@ func (h *Handler) ImportFeeds(ctx context.Context, request api.ImportFeedsReques
 		}
 	}
 
-	h.worker.RunAll(ctx, feedURLs)
+	if err = h.worker.RunAll(ctx, feedURLs); err != nil {
+		return handleError(err), nil
+	}
 
 	return api.ImportFeeds200Response{}, nil
 }
 
-func (h *Handler) ExportFeeds(ctx context.Context, request api.ExportFeedsRequestObject) (api.ExportFeedsResponseObject, error) {
+func (h *Handler) ExportFeeds(ctx context.Context, _ api.ExportFeedsRequestObject) (api.ExportFeedsResponseObject, error) {
 	result, err := h.queries.ListFeeds(ctx, database.ListFeedsParams{Limit: -1})
 	if err != nil {
 		return api.ExportFeeds500JSONResponse{Message: err.Error()}, nil
 	}
 
-	items := make([]backup.BackupItem, len(result))
+	items := make([]backup.Item, len(result))
 	for i, feed := range result {
 		if !feed.Url.Valid {
 			continue
 		}
 
-		item := backup.BackupItem{
+		item := backup.Item{
 			URL:   feed.Url.String,
 			Link:  feed.Link,
 			Title: feed.Title,

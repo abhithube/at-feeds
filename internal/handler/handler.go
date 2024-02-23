@@ -12,14 +12,14 @@ type Handler struct {
 	db            *sql.DB
 	queries       *database.Queries
 	worker        *task.Worker
-	backupManager backup.BackupManager
+	backupManager backup.Manager
 }
 
 func New(
 	db *sql.DB,
 	queries *database.Queries,
 	worker *task.Worker,
-	backupManager backup.BackupManager,
+	backupManager backup.Manager,
 ) *Handler {
 	return &Handler{
 		db:            db,

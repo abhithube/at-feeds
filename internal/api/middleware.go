@@ -25,8 +25,13 @@ func HandleSPA(buildPath string) http.HandlerFunc {
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}
+
 			w.WriteHeader(http.StatusAccepted)
-			w.Write(index)
+
+			if _, err = w.Write(index); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
 
 			return
 		} else if err != nil {

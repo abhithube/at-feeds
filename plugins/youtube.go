@@ -23,10 +23,10 @@ func (p *youTubePlugin) Preprocess(ctx context.Context, feedURL *url.URL) (*http
 	return http.NewRequestWithContext(ctx, http.MethodGet, feedURL.String(), nil)
 }
 
-func (p *youTubePlugin) Parse(ctx context.Context, resp *http.Response) (*parser.Feed, error) {
+func (p *youTubePlugin) Parse(_ context.Context, _ *http.Response) (*parser.Feed, error) {
 	return nil, nil
 }
 
-func (p *youTubePlugin) Postprocess(ctx context.Context, feed *parser.Feed) error {
+func (p *youTubePlugin) Postprocess(_ context.Context, _ *parser.Feed) error {
 	return nil
 }
