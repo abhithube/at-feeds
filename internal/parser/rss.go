@@ -6,6 +6,32 @@ import (
 	"time"
 )
 
+type RSSFeed struct {
+	Channel RSSChannel `xml:"channel"`
+}
+
+type RSSChannel struct {
+	Title string    `xml:"title"`
+	Link  string    `xml:"link"`
+	Items []RSSItem `xml:"item"`
+}
+
+type RSSItem struct {
+	Title       string        `xml:"title"`
+	Link        string        `xml:"link"`
+	PubDate     string        `xml:"pubDate"`
+	Author      string        `xml:"author"`
+	Description string        `xml:"description"`
+	Enclosure   *RSSEnclosure `xml:"enclosure"`
+	DC
+}
+
+type RSSEnclosure struct {
+	URL    string `xml:"url,attr"`
+	Length int    `xml:"length,attr"`
+	Type   string `xml:"type,attr"`
+}
+
 type RSSParser struct{}
 
 func NewRSSParser() *RSSParser {

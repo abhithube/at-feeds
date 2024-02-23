@@ -3,7 +3,32 @@ package parser
 import (
 	"encoding/xml"
 	"strings"
+	"time"
 )
+
+type AtomFeed struct {
+	Title   string      `xml:"title"`
+	Links   []AtomLink  `xml:"link"`
+	Entries []AtomEntry `xml:"entry"`
+}
+
+type AtomEntry struct {
+	Title     string       `xml:"title"`
+	Links     []AtomLink   `xml:"link"`
+	Published time.Time    `xml:"published"`
+	Authors   []AtomAuthor `xml:"author"`
+	Summary   string       `xml:"summary"`
+	Media
+}
+
+type AtomLink struct {
+	Rel  string `xml:"rel,attr"`
+	Href string `xml:"href,attr"`
+}
+
+type AtomAuthor struct {
+	Name string `xml:"name"`
+}
 
 type AtomParser struct{}
 
