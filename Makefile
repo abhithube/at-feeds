@@ -11,3 +11,6 @@ build-image:
 
 migrate:
 	migrate -path migrations -database 'sqlite3://dev.db' up
+
+format:
+	gofumpt -l -w .

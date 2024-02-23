@@ -8,9 +8,11 @@ import (
 	"github.com/gabriel-vasile/mimetype"
 )
 
-var atomMimeTypes = []string{"application/atom+xml"}
-var rssMimeTypes = []string{"application/rss+xml"}
-var htmlMimeTypes = []string{"text/html", "application/xhtml+xml"}
+var (
+	atomMimeTypes = []string{"application/atom+xml"}
+	rssMimeTypes  = []string{"application/rss+xml"}
+	htmlMimeTypes = []string{"text/html", "application/xhtml+xml"}
+)
 
 func HasMime(header http.Header, data []byte, options []string) bool {
 	contentType := header.Get("Content-Type")
