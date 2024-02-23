@@ -60,7 +60,7 @@ func main() {
 	worker := task.NewWorker(manager)
 	plugins.Register()
 
-	backupManager := backup.NewOPMLBackupManager()
+	backupManager := backup.NewOPMLManager()
 
 	router := chi.NewRouter()
 

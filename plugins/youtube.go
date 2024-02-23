@@ -10,11 +10,11 @@ import (
 	"github.com/abhithube/at-feeds/internal/parser"
 )
 
-type YouTubePlugin struct{}
+type youTubePlugin struct{}
 
 var channelRegex = regexp.MustCompile(`/channel/(?P<channelID>UC[\w-_]+)`)
 
-func (p *YouTubePlugin) Preprocess(ctx context.Context, feedURL *url.URL) (*http.Request, error) {
+func (p *youTubePlugin) Preprocess(ctx context.Context, feedURL *url.URL) (*http.Request, error) {
 	path := feedURL.Path
 	if groups := parser.GetNamedGroups(channelRegex, path); groups != nil {
 		feedURL.Path = "/feeds/videos.xml"
@@ -23,10 +23,10 @@ func (p *YouTubePlugin) Preprocess(ctx context.Context, feedURL *url.URL) (*http
 	return http.NewRequestWithContext(ctx, http.MethodGet, feedURL.String(), nil)
 }
 
-func (p *YouTubePlugin) Parse(ctx context.Context, resp *http.Response) (*parser.Feed, error) {
+func (p *youTubePlugin) Parse(ctx context.Context, resp *http.Response) (*parser.Feed, error) {
 	return nil, nil
 }
 
-func (p *YouTubePlugin) Postprocess(ctx context.Context, feed *parser.Feed) error {
+func (p *youTubePlugin) Postprocess(ctx context.Context, feed *parser.Feed) error {
 	return nil
 }

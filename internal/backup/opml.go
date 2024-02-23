@@ -4,24 +4,24 @@ import (
 	"encoding/xml"
 )
 
-type OPMLBackupManager struct{}
+type OPMLManager struct{}
 
-type OPMLDocument struct {
+type opmlDocument struct {
 	XMLName xml.Name `xml:"opml"`
 	Version string   `xml:"version,attr"`
-	Head    OPMLHead `xml:"head"`
-	Body    OPMLBody `xml:"body"`
+	Head    opmlHead `xml:"head"`
+	Body    opmlBody `xml:"body"`
 }
 
-type OPMLHead struct {
+type opmlHead struct {
 	Title string `xml:"title"`
 }
 
-type OPMLBody struct {
-	Outline []OPMLOutline `xml:"outline"`
+type opmlBody struct {
+	Outline []opmlOutline `xml:"outline"`
 }
 
-type OPMLOutline struct {
+type opmlOutline struct {
 	Type    string `xml:"type,attr"`
 	Text    string `xml:"text,attr"`
 	HtmlURL string `xml:"htmlUrl,attr"`
@@ -29,12 +29,12 @@ type OPMLOutline struct {
 	XmlURL  string `xml:"xmlUrl,attr"`
 }
 
-func NewOPMLBackupManager() *OPMLBackupManager {
-	return &OPMLBackupManager{}
+func NewOPMLManager() *OPMLManager {
+	return &OPMLManager{}
 }
 
-func (bm *OPMLBackupManager) Import(data []byte) ([]BackupItem, error) {
-	var doc OPMLDocument
+func (m *OPMLManager) Import(data []byte) ([]BackupItem, error) {
+	var doc opmlDocument
 
 	if err := xml.Unmarshal(data, &doc); err != nil {
 		return nil, err
@@ -57,12 +57,12 @@ func (bm *OPMLBackupManager) Import(data []byte) ([]BackupItem, error) {
 	return items, nil
 }
 
-func (bm *OPMLBackupManager) Export(items []BackupItem) ([]byte, error) {
-	outlines := make([]OPMLOutline, len(items))
+func (m *OPMLManager) Export(items []BackupItem) ([]byte, error) {
+	outlines := make([]opmlOutline, len(items))
 
 	for i := range items {
 		item := items[i]
-		outline := OPMLOutline{
+		outline := opmlOutline{
 			Type:    "rss",
 			Text:    item.Title,
 			HtmlURL: item.Link,
@@ -72,12 +72,12 @@ func (bm *OPMLBackupManager) Export(items []BackupItem) ([]byte, error) {
 		outlines[i] = outline
 	}
 
-	doc := OPMLDocument{
+	doc := opmlDocument{
 		Version: "2.0",
-		Head: OPMLHead{
+		Head: opmlHead{
 			Title: "Feeds",
 		},
-		Body: OPMLBody{
+		Body: opmlBody{
 			Outline: outlines,
 		},
 	}
