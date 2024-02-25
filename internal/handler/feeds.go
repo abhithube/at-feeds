@@ -24,7 +24,9 @@ func (h *Handler) ListFeeds(ctx context.Context, request api.ListFeedsRequestObj
 	params := database.ListFeedsParams{Limit: -1}
 	if request.Params.Limit != nil {
 		params.Limit = int64(*request.Params.Limit)
-		params.Offset = int64(*request.Params.Page-1) * params.Limit
+		if request.Params.Page != nil {
+			params.Offset = (int64(*request.Params.Page) - 1) * params.Limit
+		}
 	}
 
 	result, err := qtx.ListFeeds(ctx, params)

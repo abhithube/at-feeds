@@ -34,7 +34,9 @@ func (h *Handler) ListEntries(ctx context.Context, request api.ListEntriesReques
 	}
 	if request.Params.Limit != nil {
 		params.Limit = int64(*request.Params.Limit)
-		params.Offset = (int64(*request.Params.Page) - 1) * params.Limit
+		if request.Params.Page != nil {
+			params.Offset = (int64(*request.Params.Page) - 1) * params.Limit
+		}
 	}
 
 	result, err := qtx.ListEntries(ctx, params)
