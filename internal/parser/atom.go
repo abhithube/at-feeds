@@ -2,6 +2,7 @@ package parser
 
 import (
 	"encoding/xml"
+	"net/http"
 	"strings"
 	"time"
 )
@@ -84,6 +85,10 @@ func (p *AtomParser) Parse(data []byte) (*Feed, error) {
 	}
 
 	return parsed, nil
+}
+
+func IsAtomFeed(header http.Header, data []byte) bool {
+	return HasMime(header, data, []string{"application/atom+xml"})
 }
 
 func getLink(links []AtomLink) string {

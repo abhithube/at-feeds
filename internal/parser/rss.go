@@ -2,6 +2,7 @@ package parser
 
 import (
 	"encoding/xml"
+	"net/http"
 	"strings"
 	"time"
 )
@@ -27,9 +28,8 @@ type RSSItem struct {
 }
 
 type RSSEnclosure struct {
-	URL    string `xml:"url,attr"`
-	Length int    `xml:"length,attr"`
-	Type   string `xml:"type,attr"`
+	URL  string `xml:"url,attr"`
+	Type string `xml:"type,attr"`
 }
 
 type RSSParser struct{}
@@ -78,4 +78,8 @@ func (p *RSSParser) Parse(data []byte) (*Feed, error) {
 	}
 
 	return parsed, nil
+}
+
+func IsRSSFeed(header http.Header, data []byte) bool {
+	return HasMime(header, data, []string{"application/rss+xml"})
 }

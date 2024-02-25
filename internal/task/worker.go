@@ -19,12 +19,7 @@ func NewWorker(manager *Manager) *Worker {
 	return &Worker{manager: manager}
 }
 
-type Job struct {
-	ID      int
-	FeedURL string
-}
-
-var limit = 5
+const limit = 5
 
 func (w *Worker) RunAll(ctx context.Context, feedURLs []string) error {
 	var wg sync.WaitGroup

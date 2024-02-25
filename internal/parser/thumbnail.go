@@ -5,6 +5,8 @@ import (
 	"strings"
 )
 
+var imgRegex = regexp.MustCompile(`<img[^>]+src="([^"]+)"`)
+
 type ThumbnailDescriptionProcessor struct{}
 
 func NewThumbnailDescriptionProcessor() *ThumbnailDescriptionProcessor {
@@ -12,10 +14,8 @@ func NewThumbnailDescriptionProcessor() *ThumbnailDescriptionProcessor {
 }
 
 func (p *ThumbnailDescriptionProcessor) Postprocess(feed *Feed) error {
-	re := regexp.MustCompile("<img[^>]+src=\"([^\"]+)\"")
-
-	for i := range feed.Entries {
-		matches := re.FindStringSubmatch(feed.Entries[i].Content)
+	for _, entry := range feed.Entries {
+		matches := imgRegex.FindStringSubmatch(entry.Content)
 		if len(matches) == 0 {
 			continue
 		}
@@ -25,7 +25,7 @@ func (p *ThumbnailDescriptionProcessor) Postprocess(feed *Feed) error {
 			match = "https:" + match
 		}
 
-		feed.Entries[i].ThumbnailURL = match
+		entry.ThumbnailURL = match
 	}
 
 	return nil

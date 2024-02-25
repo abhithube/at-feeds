@@ -2,16 +2,11 @@ package parser
 
 import (
 	"net/http"
+	"regexp"
 	"slices"
 	"strings"
 
 	"github.com/gabriel-vasile/mimetype"
-)
-
-var (
-	atomMimeTypes = []string{"application/atom+xml"}
-	rssMimeTypes  = []string{"application/rss+xml"}
-	htmlMimeTypes = []string{"text/html", "application/xhtml+xml"}
 )
 
 func HasMime(header http.Header, data []byte, options []string) bool {
@@ -24,14 +19,18 @@ func HasMime(header http.Header, data []byte, options []string) bool {
 	return slices.ContainsFunc(options, func(s string) bool { return strings.Contains(mimeType, s) })
 }
 
-func IsHTMLDocument(header http.Header, data []byte) bool {
-	return HasMime(header, data, htmlMimeTypes)
-}
+func GetNamedGroups(regex *regexp.Regexp, s string) map[string]string {
+	match := regex.FindStringSubmatch(s)
+	if match == nil {
+		return nil
+	}
 
-func IsAtomFeed(header http.Header, data []byte) bool {
-	return HasMime(header, data, atomMimeTypes)
-}
+	result := make(map[string]string)
+	for i, name := range regex.SubexpNames() {
+		if i != 0 && name != "" {
+			result[name] = match[i]
+		}
+	}
 
-func IsRSSFeed(header http.Header, data []byte) bool {
-	return HasMime(header, data, rssMimeTypes)
+	return result
 }
