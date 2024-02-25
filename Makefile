@@ -1,4 +1,4 @@
-.PHONY: dev build-image migrate
+.PHONY: dev build-image migrate lint format
 
 dev:
 	dotenv wgo run ./cmd/server
@@ -10,7 +10,7 @@ build-image:
 	docker buildx build --platform=linux/amd64 -t at-feeds .
 
 migrate:
-	migrate -database ${DATABASE_URL} -path migrations/sqlite up
+	migrate -database sqlite://${DATABASE_URL} -path migrations/sqlite up
 
 lint:
 	golangci-lint run
