@@ -9,7 +9,7 @@ import (
 	"github.com/abhithube/at-feeds/internal/database"
 )
 
-func (h *Handler) ListEntries(ctx context.Context, request api.ListEntriesRequestObject) (api.ListEntriesResponseObject, error) {
+func (h *Handler) ListFeedEntries(ctx context.Context, request api.ListFeedEntriesRequestObject) (api.ListFeedEntriesResponseObject, error) {
 	tx, err := h.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, err
@@ -19,7 +19,7 @@ func (h *Handler) ListEntries(ctx context.Context, request api.ListEntriesReques
 
 	qtx := h.queries.WithTx(tx)
 
-	params := database.ListEntriesParams{Limit: -1}
+	params := database.ListFeedEntriesParams{Limit: -1}
 	if request.Params.FeedId != nil {
 		params.FilterByFeedID = true
 		params.FeedID = int64(*request.Params.FeedId)
@@ -39,36 +39,37 @@ func (h *Handler) ListEntries(ctx context.Context, request api.ListEntriesReques
 		}
 	}
 
-	result, err := qtx.ListEntries(ctx, params)
+	result, err := qtx.ListFeedEntries(ctx, params)
 	if err != nil {
 		return nil, err
 	}
 
-	params2 := database.CountEntriesParams{
+	params2 := database.CountFeedEntriesParams{
 		FilterByFeedID:  params.FilterByFeedID,
 		FeedID:          params.FeedID,
 		FilterByHasRead: params.FilterByHasRead,
 		HasRead:         params.HasRead,
 	}
 
-	count, err := qtx.CountEntries(ctx, params2)
+	count, err := qtx.CountFeedEntries(ctx, params2)
 	if err != nil {
 		return nil, err
 	}
 
-	data := make([]api.Entry, len(result))
+	data := make([]api.FeedEntry, len(result))
 	for i, item := range result {
 		publishedAt, err := time.Parse(time.RFC3339, item.PublishedAt)
 		if err != nil {
 			return nil, err
 		}
 
-		entry := api.Entry{
+		entry := api.FeedEntry{
 			Id:          int(item.ID),
 			Link:        item.Link,
 			Title:       item.Title,
 			PublishedAt: publishedAt,
 			HasRead:     item.HasRead == 1,
+			FeedId:      int(item.FeedID),
 		}
 		if item.Author.Valid {
 			entry.Author = &item.Author.String
@@ -83,7 +84,7 @@ func (h *Handler) ListEntries(ctx context.Context, request api.ListEntriesReques
 		data[i] = entry
 	}
 
-	response := api.ListEntries200JSONResponse{
+	response := api.ListFeedEntries200JSONResponse{
 		Data:    data,
 		HasMore: (params.Limit + params.Offset) < count,
 	}
@@ -91,7 +92,7 @@ func (h *Handler) ListEntries(ctx context.Context, request api.ListEntriesReques
 	return response, tx.Commit()
 }
 
-func (h *Handler) UpdateEntry(ctx context.Context, request api.UpdateEntryRequestObject) (api.UpdateEntryResponseObject, error) {
+func (h *Handler) UpdateFeedEntry(ctx context.Context, request api.UpdateFeedEntryRequestObject) (api.UpdateFeedEntryResponseObject, error) {
 	tx, err := h.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, err
@@ -101,9 +102,13 @@ func (h *Handler) UpdateEntry(ctx context.Context, request api.UpdateEntryReques
 
 	qtx := h.queries.WithTx(tx)
 
-	if _, err := qtx.GetEntry(ctx, int64(request.Id)); err != nil {
+	params := database.GetFeedEntryParams{
+		FeedID:  int64(request.FeedId),
+		EntryID: int64(request.EntryId),
+	}
+	if _, err := qtx.GetFeedEntry(ctx, params); err != nil {
 		if err == sql.ErrNoRows {
-			return api.UpdateEntry404JSONResponse{Message: "Entry not found"}, nil
+			return api.UpdateFeedEntry404JSONResponse{Message: "Entry not found"}, nil
 		}
 
 		return nil, err
@@ -113,36 +118,43 @@ func (h *Handler) UpdateEntry(ctx context.Context, request api.UpdateEntryReques
 	if request.Body.HasRead {
 		hasRead = 1
 	}
-	params := database.UpdateEntryParams{
-		ID:      int64(request.Id),
+	params2 := database.UpdateFeedEntryParams{
+		FeedID:  params.FeedID,
+		EntryID: params.EntryID,
 		HasRead: hasRead,
 	}
 
-	result, err := qtx.UpdateEntry(ctx, params)
+	result, err := qtx.UpdateFeedEntry(ctx, params2)
 	if err != nil {
 		return nil, err
 	}
 
-	publishedAt, err := time.Parse(time.RFC3339, result.PublishedAt)
+	entryResult, err := qtx.GetEntry(ctx, result.EntryID)
 	if err != nil {
 		return nil, err
 	}
 
-	res := api.UpdateEntry200JSONResponse{
-		Id:          int(result.ID),
-		Link:        result.Link,
-		Title:       result.Title,
+	publishedAt, err := time.Parse(time.RFC3339, entryResult.PublishedAt)
+	if err != nil {
+		return nil, err
+	}
+
+	res := api.UpdateFeedEntry200JSONResponse{
+		Id:          int(entryResult.ID),
+		Link:        entryResult.Link,
+		Title:       entryResult.Title,
 		PublishedAt: publishedAt,
 		HasRead:     result.HasRead == 1,
+		FeedId:      request.FeedId,
 	}
-	if result.Author.Valid {
-		res.Author = &result.Author.String
+	if entryResult.Author.Valid {
+		res.Author = &entryResult.Author.String
 	}
-	if result.Content.Valid {
-		res.Content = &result.Content.String
+	if entryResult.Content.Valid {
+		res.Content = &entryResult.Content.String
 	}
-	if result.ThumbnailUrl.Valid {
-		res.ThumbnailUrl = &result.ThumbnailUrl.String
+	if entryResult.ThumbnailUrl.Valid {
+		res.ThumbnailUrl = &entryResult.ThumbnailUrl.String
 	}
 
 	return res, tx.Commit()

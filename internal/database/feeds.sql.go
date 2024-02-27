@@ -41,17 +41,17 @@ SELECT
     SELECT
       COUNT(*)
     FROM
-      entries
+      feed_entries fe
     WHERE
-      entries.feed_id = ?1) AS entryCount,
+      fe.feed_id = ?1) AS entryCount,
 (
     SELECT
       count(*)
     FROM
-      entries
+      feed_entries fe
     WHERE
-      entries.feed_id = ?1
-      AND entries.has_read = FALSE) AS unreadCount
+      fe.feed_id = ?1
+      AND fe.has_read = FALSE) AS unreadCount
 FROM
   feeds
 WHERE
@@ -88,10 +88,10 @@ SELECT
     SELECT
       count(*)
     FROM
-      entries
+      feed_entries fe
     WHERE
-      entries.feed_id = feeds.id
-      AND entries.has_read = FALSE) AS unreadCount
+      fe.feed_id = feeds.id
+      AND fe.has_read = FALSE) AS unreadCount
 FROM
   feeds
 ORDER BY

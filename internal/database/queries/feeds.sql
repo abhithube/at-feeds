@@ -5,10 +5,10 @@ SELECT
     SELECT
       count(*)
     FROM
-      entries
+      feed_entries fe
     WHERE
-      entries.feed_id = feeds.id
-      AND entries.has_read = FALSE) AS unreadCount
+      fe.feed_id = feeds.id
+      AND fe.has_read = FALSE) AS unreadCount
 FROM
   feeds
 ORDER BY
@@ -28,17 +28,17 @@ SELECT
     SELECT
       COUNT(*)
     FROM
-      entries
+      feed_entries fe
     WHERE
-      entries.feed_id = sqlc.arg('id')) AS entryCount,
+      fe.feed_id = sqlc.arg('id')) AS entryCount,
 (
     SELECT
       count(*)
     FROM
-      entries
+      feed_entries fe
     WHERE
-      entries.feed_id = sqlc.arg('id')
-      AND entries.has_read = FALSE) AS unreadCount
+      fe.feed_id = sqlc.arg('id')
+      AND fe.has_read = FALSE) AS unreadCount
 FROM
   feeds
 WHERE

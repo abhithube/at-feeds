@@ -16,8 +16,6 @@ type Entry struct {
 	Author       sql.NullString
 	Content      sql.NullString
 	ThumbnailUrl sql.NullString
-	HasRead      int64
-	FeedID       int64
 }
 
 type Feed struct {
@@ -25,4 +23,10 @@ type Feed struct {
 	Url   sql.NullString
 	Link  string
 	Title string
+}
+
+type FeedEntry struct {
+	FeedID  int64
+	EntryID int64
+	HasRead int64
 }

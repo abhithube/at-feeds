@@ -157,6 +157,61 @@
         }
       }
     },
+    "/feeds/{feedId}/entries/{entryId}": {
+      "patch": {
+        "operationId": "updateFeedEntry",
+        "parameters": [
+          {
+            "name": "feedId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "entryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateFeedEntry"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated feed entry",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedEntry"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Entry not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/feeds/import": {
       "post": {
         "operationId": "importFeeds",
@@ -215,7 +270,7 @@
     },
     "/entries": {
       "get": {
-        "operationId": "listEntries",
+        "operationId": "listFeedEntries",
         "parameters": [
           {
             "name": "feedId",
@@ -265,57 +320,10 @@
                     "data": {
                       "type": "array",
                       "items": {
-                        "$ref": "#/components/schemas/Entry"
+                        "$ref": "#/components/schemas/FeedEntry"
                       }
                     }
                   }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/entries/{id}": {
-      "patch": {
-        "operationId": "updateEntry",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateEntry"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Updated entry",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Entry"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Entry not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
                 }
               }
             }
@@ -353,7 +361,7 @@
           }
         }
       },
-      "Entry": {
+      "FeedEntry": {
         "type": "object",
         "required": [
           "id",
@@ -363,7 +371,8 @@
           "author",
           "content",
           "thumbnailUrl",
-          "hasRead"
+          "hasRead",
+          "feedId"
         ],
         "properties": {
           "id": {
@@ -395,6 +404,9 @@
           },
           "hasRead": {
             "type": "boolean"
+          },
+          "feedId": {
+            "type": "integer"
           }
         }
       },
@@ -408,7 +420,7 @@
           }
         }
       },
-      "UpdateEntry": {
+      "UpdateFeedEntry": {
         "type": "object",
         "required": ["hasRead"],
         "properties": {

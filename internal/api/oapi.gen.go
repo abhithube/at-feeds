@@ -22,18 +22,6 @@ type CreateFeed struct {
 	Url string `json:"url"`
 }
 
-// Entry defines model for Entry.
-type Entry struct {
-	Author       *string   `json:"author"`
-	Content      *string   `json:"content"`
-	HasRead      bool      `json:"hasRead"`
-	Id           int       `json:"id"`
-	Link         string    `json:"link"`
-	PublishedAt  time.Time `json:"publishedAt"`
-	ThumbnailUrl *string   `json:"thumbnailUrl"`
-	Title        string    `json:"title"`
-}
-
 // Error defines model for Error.
 type Error struct {
 	Message string `json:"message"`
@@ -49,16 +37,29 @@ type Feed struct {
 	Url         *string `json:"url"`
 }
 
+// FeedEntry defines model for FeedEntry.
+type FeedEntry struct {
+	Author       *string   `json:"author"`
+	Content      *string   `json:"content"`
+	FeedId       int       `json:"feedId"`
+	HasRead      bool      `json:"hasRead"`
+	Id           int       `json:"id"`
+	Link         string    `json:"link"`
+	PublishedAt  time.Time `json:"publishedAt"`
+	ThumbnailUrl *string   `json:"thumbnailUrl"`
+	Title        string    `json:"title"`
+}
+
 // File defines model for File.
 type File = openapi_types.File
 
-// UpdateEntry defines model for UpdateEntry.
-type UpdateEntry struct {
+// UpdateFeedEntry defines model for UpdateFeedEntry.
+type UpdateFeedEntry struct {
 	HasRead bool `json:"hasRead"`
 }
 
-// ListEntriesParams defines parameters for ListEntries.
-type ListEntriesParams struct {
+// ListFeedEntriesParams defines parameters for ListFeedEntries.
+type ListFeedEntriesParams struct {
 	FeedId  *int  `form:"feedId,omitempty" json:"feedId,omitempty"`
 	HasRead *bool `form:"hasRead,omitempty" json:"hasRead,omitempty"`
 	Limit   *int  `form:"limit,omitempty" json:"limit,omitempty"`
@@ -71,20 +72,17 @@ type ListFeedsParams struct {
 	Page  *int `form:"page,omitempty" json:"page,omitempty"`
 }
 
-// UpdateEntryJSONRequestBody defines body for UpdateEntry for application/json ContentType.
-type UpdateEntryJSONRequestBody = UpdateEntry
-
 // CreateFeedJSONRequestBody defines body for CreateFeed for application/json ContentType.
 type CreateFeedJSONRequestBody = CreateFeed
+
+// UpdateFeedEntryJSONRequestBody defines body for UpdateFeedEntry for application/json ContentType.
+type UpdateFeedEntryJSONRequestBody = UpdateFeedEntry
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 
 	// (GET /entries)
-	ListEntries(w http.ResponseWriter, r *http.Request, params ListEntriesParams)
-
-	// (PATCH /entries/{id})
-	UpdateEntry(w http.ResponseWriter, r *http.Request, id int)
+	ListFeedEntries(w http.ResponseWriter, r *http.Request, params ListFeedEntriesParams)
 
 	// (GET /feeds)
 	ListFeeds(w http.ResponseWriter, r *http.Request, params ListFeedsParams)
@@ -98,6 +96,9 @@ type ServerInterface interface {
 	// (POST /feeds/import)
 	ImportFeeds(w http.ResponseWriter, r *http.Request)
 
+	// (PATCH /feeds/{feedId}/entries/{entryId})
+	UpdateFeedEntry(w http.ResponseWriter, r *http.Request, feedId int, entryId int)
+
 	// (DELETE /feeds/{id})
 	DeleteFeed(w http.ResponseWriter, r *http.Request, id int)
 
@@ -110,12 +111,7 @@ type ServerInterface interface {
 type Unimplemented struct{}
 
 // (GET /entries)
-func (_ Unimplemented) ListEntries(w http.ResponseWriter, r *http.Request, params ListEntriesParams) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// (PATCH /entries/{id})
-func (_ Unimplemented) UpdateEntry(w http.ResponseWriter, r *http.Request, id int) {
+func (_ Unimplemented) ListFeedEntries(w http.ResponseWriter, r *http.Request, params ListFeedEntriesParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -139,6 +135,11 @@ func (_ Unimplemented) ImportFeeds(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// (PATCH /feeds/{feedId}/entries/{entryId})
+func (_ Unimplemented) UpdateFeedEntry(w http.ResponseWriter, r *http.Request, feedId int, entryId int) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // (DELETE /feeds/{id})
 func (_ Unimplemented) DeleteFeed(w http.ResponseWriter, r *http.Request, id int) {
 	w.WriteHeader(http.StatusNotImplemented)
@@ -158,14 +159,14 @@ type ServerInterfaceWrapper struct {
 
 type MiddlewareFunc func(http.Handler) http.Handler
 
-// ListEntries operation middleware
-func (siw *ServerInterfaceWrapper) ListEntries(w http.ResponseWriter, r *http.Request) {
+// ListFeedEntries operation middleware
+func (siw *ServerInterfaceWrapper) ListFeedEntries(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var err error
 
 	// Parameter object where we will unmarshal all parameters from the context
-	var params ListEntriesParams
+	var params ListFeedEntriesParams
 
 	// ------------- Optional query parameter "feedId" -------------
 
@@ -200,33 +201,7 @@ func (siw *ServerInterfaceWrapper) ListEntries(w http.ResponseWriter, r *http.Re
 	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ListEntries(w, r, params)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r.WithContext(ctx))
-}
-
-// UpdateEntry operation middleware
-func (siw *ServerInterfaceWrapper) UpdateEntry(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	var err error
-
-	// ------------- Path parameter "id" -------------
-	var id int
-
-	err = runtime.BindStyledParameterWithLocation("simple", false, "id", runtime.ParamLocationPath, chi.URLParam(r, "id"), &id)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
-		return
-	}
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.UpdateEntry(w, r, id)
+		siw.Handler.ListFeedEntries(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -308,6 +283,41 @@ func (siw *ServerInterfaceWrapper) ImportFeeds(w http.ResponseWriter, r *http.Re
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ImportFeeds(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
+// UpdateFeedEntry operation middleware
+func (siw *ServerInterfaceWrapper) UpdateFeedEntry(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var err error
+
+	// ------------- Path parameter "feedId" -------------
+	var feedId int
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "feedId", runtime.ParamLocationPath, chi.URLParam(r, "feedId"), &feedId)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "feedId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "entryId" -------------
+	var entryId int
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "entryId", runtime.ParamLocationPath, chi.URLParam(r, "entryId"), &entryId)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "entryId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateFeedEntry(w, r, feedId, entryId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -483,10 +493,7 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	}
 
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/entries", wrapper.ListEntries)
-	})
-	r.Group(func(r chi.Router) {
-		r.Patch(options.BaseURL+"/entries/{id}", wrapper.UpdateEntry)
+		r.Get(options.BaseURL+"/entries", wrapper.ListFeedEntries)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/feeds", wrapper.ListFeeds)
@@ -501,6 +508,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Post(options.BaseURL+"/feeds/import", wrapper.ImportFeeds)
 	})
 	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/feeds/{feedId}/entries/{entryId}", wrapper.UpdateFeedEntry)
+	})
+	r.Group(func(r chi.Router) {
 		r.Delete(options.BaseURL+"/feeds/{id}", wrapper.DeleteFeed)
 	})
 	r.Group(func(r chi.Router) {
@@ -510,49 +520,22 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	return r
 }
 
-type ListEntriesRequestObject struct {
-	Params ListEntriesParams
+type ListFeedEntriesRequestObject struct {
+	Params ListFeedEntriesParams
 }
 
-type ListEntriesResponseObject interface {
-	VisitListEntriesResponse(w http.ResponseWriter) error
+type ListFeedEntriesResponseObject interface {
+	VisitListFeedEntriesResponse(w http.ResponseWriter) error
 }
 
-type ListEntries200JSONResponse struct {
-	Data    []Entry `json:"data"`
-	HasMore bool    `json:"hasMore"`
+type ListFeedEntries200JSONResponse struct {
+	Data    []FeedEntry `json:"data"`
+	HasMore bool        `json:"hasMore"`
 }
 
-func (response ListEntries200JSONResponse) VisitListEntriesResponse(w http.ResponseWriter) error {
+func (response ListFeedEntries200JSONResponse) VisitListFeedEntriesResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type UpdateEntryRequestObject struct {
-	Id   int `json:"id"`
-	Body *UpdateEntryJSONRequestBody
-}
-
-type UpdateEntryResponseObject interface {
-	VisitUpdateEntryResponse(w http.ResponseWriter) error
-}
-
-type UpdateEntry200JSONResponse Entry
-
-func (response UpdateEntry200JSONResponse) VisitUpdateEntryResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type UpdateEntry404JSONResponse Error
-
-func (response UpdateEntry404JSONResponse) VisitUpdateEntryResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(404)
 
 	return json.NewEncoder(w).Encode(response)
 }
@@ -663,6 +646,34 @@ func (response ImportFeeds500JSONResponse) VisitImportFeedsResponse(w http.Respo
 	return json.NewEncoder(w).Encode(response)
 }
 
+type UpdateFeedEntryRequestObject struct {
+	FeedId  int `json:"feedId"`
+	EntryId int `json:"entryId"`
+	Body    *UpdateFeedEntryJSONRequestBody
+}
+
+type UpdateFeedEntryResponseObject interface {
+	VisitUpdateFeedEntryResponse(w http.ResponseWriter) error
+}
+
+type UpdateFeedEntry200JSONResponse FeedEntry
+
+func (response UpdateFeedEntry200JSONResponse) VisitUpdateFeedEntryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateFeedEntry404JSONResponse Error
+
+func (response UpdateFeedEntry404JSONResponse) VisitUpdateFeedEntryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
 type DeleteFeedRequestObject struct {
 	Id int `json:"id"`
 }
@@ -718,10 +729,7 @@ func (response GetFeed404JSONResponse) VisitGetFeedResponse(w http.ResponseWrite
 type StrictServerInterface interface {
 
 	// (GET /entries)
-	ListEntries(ctx context.Context, request ListEntriesRequestObject) (ListEntriesResponseObject, error)
-
-	// (PATCH /entries/{id})
-	UpdateEntry(ctx context.Context, request UpdateEntryRequestObject) (UpdateEntryResponseObject, error)
+	ListFeedEntries(ctx context.Context, request ListFeedEntriesRequestObject) (ListFeedEntriesResponseObject, error)
 
 	// (GET /feeds)
 	ListFeeds(ctx context.Context, request ListFeedsRequestObject) (ListFeedsResponseObject, error)
@@ -734,6 +742,9 @@ type StrictServerInterface interface {
 
 	// (POST /feeds/import)
 	ImportFeeds(ctx context.Context, request ImportFeedsRequestObject) (ImportFeedsResponseObject, error)
+
+	// (PATCH /feeds/{feedId}/entries/{entryId})
+	UpdateFeedEntry(ctx context.Context, request UpdateFeedEntryRequestObject) (UpdateFeedEntryResponseObject, error)
 
 	// (DELETE /feeds/{id})
 	DeleteFeed(ctx context.Context, request DeleteFeedRequestObject) (DeleteFeedResponseObject, error)
@@ -771,58 +782,25 @@ type strictHandler struct {
 	options     StrictHTTPServerOptions
 }
 
-// ListEntries operation middleware
-func (sh *strictHandler) ListEntries(w http.ResponseWriter, r *http.Request, params ListEntriesParams) {
-	var request ListEntriesRequestObject
+// ListFeedEntries operation middleware
+func (sh *strictHandler) ListFeedEntries(w http.ResponseWriter, r *http.Request, params ListFeedEntriesParams) {
+	var request ListFeedEntriesRequestObject
 
 	request.Params = params
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.ListEntries(ctx, request.(ListEntriesRequestObject))
+		return sh.ssi.ListFeedEntries(ctx, request.(ListFeedEntriesRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "ListEntries")
+		handler = middleware(handler, "ListFeedEntries")
 	}
 
 	response, err := handler(r.Context(), w, r, request)
 
 	if err != nil {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(ListEntriesResponseObject); ok {
-		if err := validResponse.VisitListEntriesResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
-	}
-}
-
-// UpdateEntry operation middleware
-func (sh *strictHandler) UpdateEntry(w http.ResponseWriter, r *http.Request, id int) {
-	var request UpdateEntryRequestObject
-
-	request.Id = id
-
-	var body UpdateEntryJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
-		return
-	}
-	request.Body = &body
-
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.UpdateEntry(ctx, request.(UpdateEntryRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "UpdateEntry")
-	}
-
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(UpdateEntryResponseObject); ok {
-		if err := validResponse.VisitUpdateEntryResponse(w); err != nil {
+	} else if validResponse, ok := response.(ListFeedEntriesResponseObject); ok {
+		if err := validResponse.VisitListFeedEntriesResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -930,6 +908,40 @@ func (sh *strictHandler) ImportFeeds(w http.ResponseWriter, r *http.Request) {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ImportFeedsResponseObject); ok {
 		if err := validResponse.VisitImportFeedsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateFeedEntry operation middleware
+func (sh *strictHandler) UpdateFeedEntry(w http.ResponseWriter, r *http.Request, feedId int, entryId int) {
+	var request UpdateFeedEntryRequestObject
+
+	request.FeedId = feedId
+	request.EntryId = entryId
+
+	var body UpdateFeedEntryJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateFeedEntry(ctx, request.(UpdateFeedEntryRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateFeedEntry")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateFeedEntryResponseObject); ok {
+		if err := validResponse.VisitUpdateFeedEntryResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

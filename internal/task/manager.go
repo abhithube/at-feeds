@@ -152,10 +152,19 @@ func (m *Manager) Save(ctx context.Context, feed *parser.Feed) (*database.Feed, 
 			Author:       author,
 			Content:      content,
 			ThumbnailUrl: thumbnailURL,
-			FeedID:       inserted.ID,
 		}
 
-		if err = qtx.UpsertEntry(ctx, params); err != nil {
+		insertedEntry, err := qtx.UpsertEntry(ctx, params)
+		if err != nil {
+			return nil, err
+		}
+
+		params2 := database.UpsertFeedEntryParams{
+			EntryID: insertedEntry.ID,
+			FeedID:  inserted.ID,
+		}
+
+		if err = qtx.UpsertFeedEntry(ctx, params2); err != nil {
 			return nil, err
 		}
 	}
