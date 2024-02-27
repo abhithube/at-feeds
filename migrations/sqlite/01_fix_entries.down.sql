@@ -1,6 +1,6 @@
 PRAGMA foreign_keys = OFF;
 
-CREATE TABLE IF NOT EXISTS entries_new(
+CREATE TABLE entries_new(
   id integer PRIMARY KEY,
   link text NOT NULL,
   title text NOT NULL,

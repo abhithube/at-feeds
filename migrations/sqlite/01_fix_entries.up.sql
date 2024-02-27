@@ -1,6 +1,6 @@
 PRAGMA foreign_keys = OFF;
 
-CREATE TABLE IF NOT EXISTS entries_new(
+CREATE TABLE entries_new(
   id integer PRIMARY KEY,
   link text NOT NULL UNIQUE,
   title text NOT NULL,
@@ -22,7 +22,7 @@ SELECT
 FROM
   entries;
 
-CREATE TABLE IF NOT EXISTS feed_entries(
+CREATE TABLE feed_entries(
   feed_id integer NOT NULL REFERENCES feeds(id) ON DELETE CASCADE,
   entry_id integer NOT NULL REFERENCES entries(id) ON DELETE CASCADE,
   has_read integer NOT NULL DEFAULT 0,

@@ -1,11 +1,11 @@
-CREATE TABLE IF NOT EXISTS feeds(
+CREATE TABLE feeds(
   id integer PRIMARY KEY,
   url text,
   link text NOT NULL UNIQUE,
   title text NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS entries(
+CREATE TABLE entries(
   id integer PRIMARY KEY,
   link text NOT NULL,
   title text NOT NULL,
