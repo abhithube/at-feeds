@@ -13,6 +13,9 @@ export interface paths {
     get: operations["getFeed"];
     delete: operations["deleteFeed"];
   };
+  "/feeds/{feedId}/entries/{entryId}": {
+    patch: operations["updateFeedEntry"];
+  };
   "/feeds/import": {
     post: operations["importFeeds"];
   };
@@ -20,10 +23,7 @@ export interface paths {
     post: operations["exportFeeds"];
   };
   "/entries": {
-    get: operations["listEntries"];
-  };
-  "/entries/{id}": {
-    patch: operations["updateEntry"];
+    get: operations["listFeedEntries"];
   };
 }
 
@@ -41,7 +41,7 @@ export interface components {
       entryCount?: number;
       unreadCount: number;
     };
-    Entry: {
+    FeedEntry: {
       id: number;
       /** Format: uri */
       link: string;
@@ -53,12 +53,13 @@ export interface components {
       /** Format: uri */
       thumbnailUrl: string | null;
       hasRead: boolean;
+      feedId: number;
     };
     CreateFeed: {
       /** Format: uri */
       url: string;
     };
-    UpdateEntry: {
+    UpdateFeedEntry: {
       hasRead: boolean;
     };
     /** Format: binary */
@@ -160,6 +161,33 @@ export interface operations {
       };
     };
   };
+  updateFeedEntry: {
+    parameters: {
+      path: {
+        feedId: number;
+        entryId: number;
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["UpdateFeedEntry"];
+      };
+    };
+    responses: {
+      /** @description Updated feed entry */
+      200: {
+        content: {
+          "application/json": components["schemas"]["FeedEntry"];
+        };
+      };
+      /** @description Entry not found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+  };
   importFeeds: {
     requestBody?: {
       content: {
@@ -195,7 +223,7 @@ export interface operations {
       };
     };
   };
-  listEntries: {
+  listFeedEntries: {
     parameters: {
       query?: {
         feedId?: number;
@@ -210,34 +238,8 @@ export interface operations {
         content: {
           "application/json": {
             hasMore: boolean;
-            data: components["schemas"]["Entry"][];
+            data: components["schemas"]["FeedEntry"][];
           };
-        };
-      };
-    };
-  };
-  updateEntry: {
-    parameters: {
-      path: {
-        id: number;
-      };
-    };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["UpdateEntry"];
-      };
-    };
-    responses: {
-      /** @description Updated entry */
-      200: {
-        content: {
-          "application/json": components["schemas"]["Entry"];
-        };
-      };
-      /** @description Entry not found */
-      404: {
-        content: {
-          "application/json": components["schemas"]["Error"];
         };
       };
     };

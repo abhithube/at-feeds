@@ -1,5 +1,5 @@
 import { LIMIT } from '@/lib/constants'
-import { ensureInfiniteQueryData, entriesQueryOptions } from '@/lib/query'
+import { ensureInfiniteQueryData, feedEntriesQueryOptions } from '@/lib/query'
 import { EntryGrid } from '@/routes/-entries/entry-grid'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
@@ -9,7 +9,7 @@ export const Route = createFileRoute('/')({
   loader: async ({ context }) => {
     await ensureInfiniteQueryData(
       context.queryClient,
-      entriesQueryOptions({
+      feedEntriesQueryOptions({
         limit: LIMIT,
       }) as any,
     )
@@ -23,7 +23,7 @@ function Component() {
     hasNextPage,
     fetchNextPage,
   } = useInfiniteQuery(
-    entriesQueryOptions({
+    feedEntriesQueryOptions({
       limit: LIMIT,
     }),
   )

@@ -5,7 +5,7 @@ import {
   queryOptions,
 } from '@tanstack/react-query'
 import { client } from './client'
-import { ListEntriesQuery, ListFeedsQuery } from './types'
+import { ListFeedEntriesQuery, ListFeedsQuery } from './types'
 
 export async function ensureInfiniteQueryData(
   queryClient: QueryClient,
@@ -54,7 +54,7 @@ export const feedQueryOptions = (id: number) =>
     },
   })
 
-export const entriesQueryOptions = (query: ListEntriesQuery) =>
+export const feedEntriesQueryOptions = (query: ListFeedEntriesQuery) =>
   infiniteQueryOptions({
     queryKey: ['/entries', query],
     queryFn: async ({ pageParam }) => {

@@ -1,6 +1,6 @@
 import { Checkbox } from '@/components/ui/checkbox'
 import { client } from '@/lib/client'
-import { Entry, UpdateEntryBody } from '@/lib/types'
+import { Entry, UpdateFeedEntryBody } from '@/lib/types'
 import { useMutation } from '@tanstack/react-query'
 import { useState } from 'react'
 
@@ -12,11 +12,12 @@ export function EntryCardActions({ entry }: EntryCardActionsProps) {
   const [hasRead, setRead] = useState(entry.hasRead)
 
   const { mutateAsync: updateEntry } = useMutation({
-    mutationFn: async (variables: UpdateEntryBody & { id: number }) => {
-      const res = await client.PATCH('/entries/{id}', {
+    mutationFn: async (variables: UpdateFeedEntryBody) => {
+      const res = await client.PATCH('/feeds/{feedId}/entries/{entryId}', {
         params: {
           path: {
-            id: +variables.id,
+            feedId: entry.feedId,
+            entryId: entry.id,
           },
         },
         body: {
@@ -40,7 +41,6 @@ export function EntryCardActions({ entry }: EntryCardActionsProps) {
         checked={!hasRead}
         onCheckedChange={(checked) =>
           updateEntry({
-            id: +entry.id,
             hasRead: !checked,
           })
         }

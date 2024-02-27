@@ -1,7 +1,7 @@
 import { LIMIT } from '@/lib/constants'
 import {
   ensureInfiniteQueryData,
-  entriesQueryOptions,
+  feedEntriesQueryOptions,
   feedQueryOptions,
 } from '@/lib/query'
 import { EntryGrid } from '@/routes/-entries/entry-grid'
@@ -15,7 +15,7 @@ export const Route = createFileRoute('/feeds/$feedId')({
       context.queryClient.ensureQueryData(feedQueryOptions(+params.feedId)),
       ensureInfiniteQueryData(
         context.queryClient,
-        entriesQueryOptions({
+        feedEntriesQueryOptions({
           feedId: +params.feedId,
           limit: LIMIT,
         }) as any,
@@ -33,7 +33,7 @@ function Component() {
     hasNextPage,
     fetchNextPage,
   } = useInfiniteQuery(
-    entriesQueryOptions({
+    feedEntriesQueryOptions({
       feedId: +feedId,
       limit: LIMIT,
     }),
