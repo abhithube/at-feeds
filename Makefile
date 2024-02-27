@@ -9,8 +9,11 @@ build:
 build-image:
 	docker buildx build --platform=linux/amd64 -t at-feeds .
 
+generate:
+	go generate ./...
+
 migrate:
-	migrate -database sqlite://${DATABASE_URL} -path migrations/sqlite up
+	migrate -database sqlite3://${DATABASE_URL} -path migrations/sqlite up
 
 lint:
 	golangci-lint run
