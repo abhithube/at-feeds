@@ -1,7 +1,7 @@
 .PHONY: dev build-image migrate lint format
 
 dev:
-	dotenv wgo run ./cmd/server
+	wgo run ./cmd/server
 
 build:
 	go build -ldflags '-s -w' -o ./bin/server ./cmd/server
