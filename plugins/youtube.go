@@ -18,7 +18,7 @@ func (p *youTubePlugin) Preprocess(ctx context.Context, feedURL *url.URL) (*http
 	path := feedURL.Path
 	if groups := parser.GetNamedGroups(channelRegex, path); groups != nil {
 		feedURL.Path = "/feeds/videos.xml"
-		feedURL.RawQuery = fmt.Sprintf("?channel_id=%s", groups["channelID"])
+		feedURL.RawQuery = fmt.Sprintf("channel_id=%s", groups["channelID"])
 	}
 	return http.NewRequestWithContext(ctx, http.MethodGet, feedURL.String(), nil)
 }
