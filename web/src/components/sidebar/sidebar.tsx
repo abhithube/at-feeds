@@ -16,7 +16,7 @@ export const Sidebar = ({ feeds }: SidebarProps) => {
   const navigate = useNavigate()
 
   return (
-    <nav className="fixed flex w-[256px] h-full overflow-y-auto shrink-0 flex-col border-r border-border">
+    <nav className="flex flex-col h-full">
       <div className="my-4 px-4">
         <Logo />
       </div>

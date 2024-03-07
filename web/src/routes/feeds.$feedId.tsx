@@ -46,17 +46,17 @@ function Component() {
   if (!feed || !entries) return
 
   return (
-    <div>
-      <header className="fixed top-0 w-full bg-background p-8">
+    <>
+      <header className="sticky top-0 w-full bg-background p-8">
         <h1 className="text-3xl font-medium">{feed.title}</h1>
       </header>
-      <main className="mt-24 h-full overflow-y-auto pb-8">
+      <main className="pb-8">
         <EntryGrid
           entries={entries.pages.map((page) => page.data).flat()}
           hasMore={hasNextPage}
           loadMore={fetchNextPage}
         />
       </main>
-    </div>
+    </>
   )
 }
