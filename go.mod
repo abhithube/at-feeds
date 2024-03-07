@@ -6,13 +6,13 @@ require (
 	github.com/andybalholm/cascadia v1.3.2
 	github.com/gabriel-vasile/mimetype v1.4.3
 	github.com/go-chi/chi/v5 v5.0.12
-	github.com/go-chi/cors v1.2.1
 	github.com/golang-migrate/migrate/v4 v4.17.0
 	github.com/hashicorp/go-retryablehttp v0.7.5
 	github.com/mattn/go-sqlite3 v1.14.22
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/robfig/cron/v3 v3.0.1
-	golang.org/x/net v0.21.0
+	github.com/rs/cors v1.10.1
+	golang.org/x/net v0.22.0
 )
 
 require (

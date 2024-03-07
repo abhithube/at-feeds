@@ -6,14 +6,22 @@ import (
 	"path/filepath"
 
 	"github.com/abhithube/at-feeds/web"
-	"github.com/go-chi/cors"
+	"github.com/rs/cors"
 )
 
 func CorsHandler(origin string) func(next http.Handler) http.Handler {
-	return cors.Handler(cors.Options{
+	options := cors.Options{
 		AllowedOrigins: []string{origin},
-		AllowedMethods: []string{http.MethodGet, http.MethodPost, http.MethodPatch, http.MethodDelete, http.MethodOptions},
-	})
+		AllowedMethods: []string{
+			http.MethodGet,
+			http.MethodPost,
+			http.MethodPatch,
+			http.MethodDelete,
+			http.MethodOptions,
+		},
+	}
+
+	return cors.New(options).Handler
 }
 
 func HandleSPA(buildPath string) http.HandlerFunc {
