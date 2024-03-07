@@ -36,7 +36,7 @@ func (q *Queries) DeleteFeed(ctx context.Context, id int64) error {
 
 const getFeed = `-- name: GetFeed :one
 SELECT
-  id, url, link, title,
+  id, url, link, title, collection_id,
 (
     SELECT
       COUNT(*)
@@ -59,12 +59,13 @@ WHERE
 `
 
 type GetFeedRow struct {
-	ID          int64
-	Url         sql.NullString
-	Link        string
-	Title       string
-	Entrycount  int64
-	Unreadcount int64
+	ID           int64
+	Url          sql.NullString
+	Link         string
+	Title        string
+	CollectionID sql.NullInt64
+	Entrycount   int64
+	Unreadcount  int64
 }
 
 func (q *Queries) GetFeed(ctx context.Context, id int64) (GetFeedRow, error) {
@@ -75,6 +76,7 @@ func (q *Queries) GetFeed(ctx context.Context, id int64) (GetFeedRow, error) {
 		&i.Url,
 		&i.Link,
 		&i.Title,
+		&i.CollectionID,
 		&i.Entrycount,
 		&i.Unreadcount,
 	)
@@ -83,7 +85,7 @@ func (q *Queries) GetFeed(ctx context.Context, id int64) (GetFeedRow, error) {
 
 const listFeeds = `-- name: ListFeeds :many
 SELECT
-  id, url, link, title,
+  id, url, link, title, collection_id,
 (
     SELECT
       count(*)
@@ -105,11 +107,12 @@ type ListFeedsParams struct {
 }
 
 type ListFeedsRow struct {
-	ID          int64
-	Url         sql.NullString
-	Link        string
-	Title       string
-	Unreadcount int64
+	ID           int64
+	Url          sql.NullString
+	Link         string
+	Title        string
+	CollectionID sql.NullInt64
+	Unreadcount  int64
 }
 
 func (q *Queries) ListFeeds(ctx context.Context, arg ListFeedsParams) ([]ListFeedsRow, error) {
@@ -126,6 +129,7 @@ func (q *Queries) ListFeeds(ctx context.Context, arg ListFeedsParams) ([]ListFee
 			&i.Url,
 			&i.Link,
 			&i.Title,
+			&i.CollectionID,
 			&i.Unreadcount,
 		); err != nil {
 			return nil, err
@@ -148,7 +152,7 @@ ON CONFLICT (link)
   DO UPDATE SET
     url = excluded.url, title = excluded.title
   RETURNING
-    id, url, link, title
+    id, url, link, title, collection_id
 `
 
 type UpsertFeedParams struct {
@@ -165,6 +169,7 @@ func (q *Queries) UpsertFeed(ctx context.Context, arg UpsertFeedParams) (Feed, e
 		&i.Url,
 		&i.Link,
 		&i.Title,
+		&i.CollectionID,
 	)
 	return i, err
 }

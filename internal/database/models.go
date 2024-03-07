@@ -8,6 +8,12 @@ import (
 	"database/sql"
 )
 
+type Collection struct {
+	ID       int64
+	Title    string
+	ParentID sql.NullInt64
+}
+
 type Entry struct {
 	ID           int64
 	Link         string
@@ -19,10 +25,11 @@ type Entry struct {
 }
 
 type Feed struct {
-	ID    int64
-	Url   sql.NullString
-	Link  string
-	Title string
+	ID           int64
+	Url          sql.NullString
+	Link         string
+	Title        string
+	CollectionID sql.NullInt64
 }
 
 type FeedEntry struct {
