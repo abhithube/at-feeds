@@ -83,8 +83,9 @@ func main() {
 	if shouldRefresh {
 		log.Println("Initializing refresh job...")
 
+		job := task.NewRefreshJob(queries, worker)
 		c := cron.New()
-		if _, err = c.AddFunc("*/15 * * * *", func() { cronHandler(queries, worker) }); err != nil {
+		if _, err = c.AddFunc("*/15 * * * *", func() { job.Run(context.Background()) }); err != nil {
 			log.Fatal(err)
 		}
 
@@ -94,27 +95,6 @@ func main() {
 	log.Printf("Starting server at address %s\n", httpServer.Addr)
 
 	if err := httpServer.ListenAndServe(); err != nil {
-		log.Fatal(err)
-	}
-}
-
-func cronHandler(queries *database.Queries, worker *task.Worker) {
-	ctx := context.Background()
-
-	feeds, err := queries.ListFeeds(ctx, database.ListFeedsParams{Limit: -1})
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	urls := make([]string, len(feeds))
-	for i, feed := range feeds {
-		urls[i] = feed.Link
-		if feed.Url.Valid {
-			urls[i] = feed.Url.String
-		}
-	}
-
-	if err := worker.RunAll(ctx, urls); err != nil {
 		log.Fatal(err)
 	}
 }
