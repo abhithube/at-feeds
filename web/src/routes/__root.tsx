@@ -48,7 +48,7 @@ function Component() {
 
   return (
     <ResizablePanelGroup direction="horizontal">
-      <ResizablePanel minSize={20} defaultSize={20} maxSize={30}>
+      <ResizablePanel minSize={15} defaultSize={20} maxSize={30} collapsible>
         <div className="h-screen overflow-y-auto">
           <Sidebar
             feeds={feeds.pages[0].data}
