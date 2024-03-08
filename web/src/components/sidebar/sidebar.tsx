@@ -3,7 +3,7 @@ import { Separator } from '@/components/ui/separator'
 import { Feed } from '@/lib/types'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { Bookmark, Home, Plus, Settings } from 'lucide-react'
-import { FeedList } from './feed-list'
+import { FeedItem } from './feed-item'
 import { Logo } from './logo'
 
 type SidebarProps = {
@@ -59,9 +59,9 @@ export const Sidebar = ({ feeds }: SidebarProps) => {
             <Plus className="h-4 w-4" />
           </Button>
         </div>
-        <div className="space-y-1 px-4">
+        <div className="space-y-1 px-4 pt-2">
           {feeds.length > 0 ? (
-            <FeedList feeds={feeds} />
+            feeds.map((feed) => <FeedItem key={feed.id} feed={feed} />)
           ) : (
             <div className="text-sm font-light">
               You have not subscribed to any feeds yet. Click + to add one.
