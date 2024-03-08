@@ -64,7 +64,7 @@ func main() {
 	router := chi.NewRouter()
 
 	if frontendURL != "" {
-		router.Use(api.CorsHandler(frontendURL))
+		router.Use(api.CORSHandler(frontendURL))
 	}
 
 	si := api.NewStrictHandler(handler.New(db, queries, worker, backupManager), nil)
@@ -72,7 +72,7 @@ func main() {
 	api.HandlerFromMuxWithBaseURL(si, router, "/api")
 
 	if frontendURL == "" {
-		router.Get("/*", api.HandleSPA("dist"))
+		router.Get("/*", api.SPAHandler("dist"))
 	}
 
 	httpServer := http.Server{

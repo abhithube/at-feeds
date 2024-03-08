@@ -6,25 +6,9 @@ import (
 	"path/filepath"
 
 	"github.com/abhithube/at-feeds/web"
-	"github.com/rs/cors"
 )
 
-func CorsHandler(origin string) func(next http.Handler) http.Handler {
-	options := cors.Options{
-		AllowedOrigins: []string{origin},
-		AllowedMethods: []string{
-			http.MethodGet,
-			http.MethodPost,
-			http.MethodPatch,
-			http.MethodDelete,
-			http.MethodOptions,
-		},
-	}
-
-	return cors.New(options).Handler
-}
-
-func HandleSPA(buildPath string) http.HandlerFunc {
+func SPAHandler(buildPath string) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		f, err := web.BuildFs.Open(filepath.Join(buildPath, r.URL.Path))
 		if os.IsNotExist(err) {
