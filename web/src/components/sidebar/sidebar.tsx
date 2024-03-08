@@ -16,7 +16,7 @@ export const Sidebar = ({ feeds }: SidebarProps) => {
   const navigate = useNavigate()
 
   return (
-    <nav className="flex flex-col h-full">
+    <nav className="flex h-full flex-col">
       <div className="my-4 px-4">
         <Logo />
       </div>
@@ -39,7 +39,7 @@ export const Sidebar = ({ feeds }: SidebarProps) => {
         </Link>
       </div>
       <Separator className="mb-2" />
-      <div className="flex w-full grow flex-col mb-2">
+      <div className="mb-2 flex w-full grow flex-col">
         <div className="flex items-center justify-between px-4">
           <span className="grow text-xs font-semibold text-muted-foreground">
             Feeds
