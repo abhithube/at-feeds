@@ -10,6 +10,31 @@ import (
 	"database/sql"
 )
 
+const countCollections = `-- name: CountCollections :one
+SELECT
+  COUNT(*) AS count
+FROM
+  collections
+WHERE
+  CASE WHEN ?1 THEN
+    parent_id = ?2
+  ELSE
+    TRUE
+  END
+`
+
+type CountCollectionsParams struct {
+	FilterByParentID interface{}
+	ParentID         sql.NullInt64
+}
+
+func (q *Queries) CountCollections(ctx context.Context, arg CountCollectionsParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countCollections, arg.FilterByParentID, arg.ParentID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const deleteCollection = `-- name: DeleteCollection :exec
 DELETE FROM collections
 WHERE id = ?1
@@ -39,4 +64,55 @@ func (q *Queries) InsertCollection(ctx context.Context, arg InsertCollectionPara
 	var i Collection
 	err := row.Scan(&i.ID, &i.Title, &i.ParentID)
 	return i, err
+}
+
+const listCollections = `-- name: ListCollections :many
+SELECT
+  id, title, parent_id
+FROM
+  collections
+WHERE
+  CASE WHEN ?1 THEN
+    parent_id = ?2
+  ELSE
+    TRUE
+  END
+ORDER BY
+  title ASC
+LIMIT ?4 OFFSET ?3
+`
+
+type ListCollectionsParams struct {
+	FilterByParentID interface{}
+	ParentID         sql.NullInt64
+	Offset           int64
+	Limit            int64
+}
+
+func (q *Queries) ListCollections(ctx context.Context, arg ListCollectionsParams) ([]Collection, error) {
+	rows, err := q.db.QueryContext(ctx, listCollections,
+		arg.FilterByParentID,
+		arg.ParentID,
+		arg.Offset,
+		arg.Limit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Collection
+	for rows.Next() {
+		var i Collection
+		if err := rows.Scan(&i.ID, &i.Title, &i.ParentID); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
