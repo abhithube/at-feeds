@@ -4,6 +4,7 @@ import { RouterProvider, createRouter } from '@tanstack/react-router'
 import { StrictMode } from 'react'
 import ReactDOM from 'react-dom/client'
 import './index.css'
+import { PRELOAD_DELAY } from './lib/constants'
 import { routeTree } from './routeTree.gen'
 
 const queryClient = new QueryClient()
@@ -14,7 +15,7 @@ const router = createRouter({
     queryClient,
   },
   defaultPreload: 'intent',
-  defaultPreloadStaleTime: 0,
+  defaultPreloadDelay: PRELOAD_DELAY,
 })
 
 declare module '@tanstack/react-router' {

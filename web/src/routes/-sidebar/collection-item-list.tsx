@@ -10,16 +10,16 @@ type CollectionItemListProps = {
 }
 
 export function CollectionItemList({ collection }: CollectionItemListProps) {
-  const { data: feeds } = useQuery(
-    feedsQueryOptions({
-      collectionId: collection.id,
+  const { data: collections } = useQuery(
+    collectionsQueryOptions({
+      parentId: collection.id,
       limit: -1,
     }),
   )
 
-  const { data: collections } = useQuery(
-    collectionsQueryOptions({
-      parentId: collection.id,
+  const { data: feeds } = useQuery(
+    feedsQueryOptions({
+      collectionId: collection.id,
       limit: -1,
     }),
   )
