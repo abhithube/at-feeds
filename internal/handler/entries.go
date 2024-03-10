@@ -19,23 +19,28 @@ func (h *Handler) ListFeedEntries(ctx context.Context, request api.ListFeedEntri
 
 	qtx := h.queries.WithTx(tx)
 
+	feedID := request.Params.FeedId
+	hasRead := request.Params.HasRead
+	limit := request.Params.Limit
+	page := request.Params.Page
+
 	params := database.ListFeedEntriesParams{Limit: -1}
-	if request.Params.FeedId != nil {
+	if feedID != nil {
 		params.FilterByFeedID = true
-		params.FeedID = int64(*request.Params.FeedId)
+		params.FeedID = int64(*feedID)
 	}
-	if request.Params.HasRead != nil {
-		var hasRead int64
-		if *request.Params.HasRead {
-			hasRead = 1
+	if hasRead != nil {
+		var hasReadInt int64
+		if *hasRead {
+			hasReadInt = 1
 		}
 		params.FilterByHasRead = true
-		params.HasRead = hasRead
+		params.HasRead = hasReadInt
 	}
-	if request.Params.Limit != nil {
-		params.Limit = int64(*request.Params.Limit)
-		if request.Params.Page != nil {
-			params.Offset = (int64(*request.Params.Page) - 1) * params.Limit
+	if limit != nil {
+		params.Limit = int64(*limit)
+		if page != nil {
+			params.Offset = (int64(*page) - 1) * params.Limit
 		}
 	}
 

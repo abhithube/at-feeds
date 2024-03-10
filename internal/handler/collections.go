@@ -20,14 +20,17 @@ func (h *Handler) ListCollections(ctx context.Context, request api.ListCollectio
 
 	qtx := h.queries.WithTx(tx)
 
+	parentID := request.Params.ParentId
+	limit := request.Params.Limit
+	page := request.Params.Page
+
 	params := database.ListCollectionsParams{Limit: -1}
-	if request.Params.Limit != nil {
-		params.Limit = int64(*request.Params.Limit)
-		if request.Params.Page != nil {
-			params.Offset = (int64(*request.Params.Page) - 1) * params.Limit
+	if limit != nil {
+		params.Limit = int64(*limit)
+		if page != nil {
+			params.Offset = (int64(*page) - 1) * params.Limit
 		}
 	}
-	parentID := request.Params.ParentId
 	if parentID != nil {
 		params.FilterByParentID = true
 		params.ParentID = parentID

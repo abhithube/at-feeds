@@ -21,17 +21,20 @@ func (h *Handler) ListFeeds(ctx context.Context, request api.ListFeedsRequestObj
 
 	qtx := h.queries.WithTx(tx)
 
+	collectionID := request.Params.CollectionId
+	limit := request.Params.Limit
+	page := request.Params.Page
+
 	params := database.ListFeedsParams{Limit: -1}
-	if request.Params.Limit != nil {
-		params.Limit = int64(*request.Params.Limit)
-		if request.Params.Page != nil {
-			params.Offset = (int64(*request.Params.Page) - 1) * params.Limit
+	if limit != nil {
+		params.Limit = int64(*limit)
+		if page != nil {
+			params.Offset = (int64(*page) - 1) * params.Limit
 		}
 	}
-	collectionID := request.Params.CollectionId
 	if collectionID != nil {
 		params.FilterByCollectionID = true
-		params.CollectionID = request.Params.CollectionId
+		params.CollectionID = collectionID
 	}
 
 	result, err := qtx.ListFeeds(ctx, params)
