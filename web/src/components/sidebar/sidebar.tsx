@@ -8,11 +8,11 @@ import { FeedItem } from './feed-item'
 import { Logo } from './logo'
 
 type SidebarProps = {
-  feeds: Feed[]
   collections: Collection[]
+  feeds: Feed[]
 }
 
-export const Sidebar = ({ feeds, collections }: SidebarProps) => {
+export const Sidebar = ({ collections, feeds }: SidebarProps) => {
   const navigate = useNavigate()
 
   return (

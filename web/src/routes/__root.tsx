@@ -24,6 +24,7 @@ export const Route = createRootRouteWithContext<{
     await Promise.all([
       context.queryClient.ensureQueryData(
         collectionsQueryOptions({
+          parentId: -1,
           limit: -1,
         }),
       ),
@@ -41,15 +42,16 @@ export const Route = createRootRouteWithContext<{
 function Component() {
   const { modal } = Route.useSearch<{ modal: Modal }>()
 
-  const { data: feeds } = useQuery(
-    feedsQueryOptions({
-      collectionId: -1,
+  const { data: collections } = useQuery(
+    collectionsQueryOptions({
+      parentId: -1,
       limit: -1,
     }),
   )
 
-  const { data: collections } = useQuery(
-    collectionsQueryOptions({
+  const { data: feeds } = useQuery(
+    feedsQueryOptions({
+      collectionId: -1,
       limit: -1,
     }),
   )
