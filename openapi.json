@@ -119,6 +119,14 @@
             "schema": {
               "type": "integer"
             }
+          },
+          {
+            "name": "collectionId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
           }
         ],
         "responses": {

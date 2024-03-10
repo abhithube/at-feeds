@@ -11,6 +11,16 @@ SELECT
       AND fe.has_read = FALSE) AS unreadCount
 FROM
   feeds
+WHERE
+  CASE WHEN sqlc.arg('filter_by_collection_id') THEN
+    CASE WHEN sqlc.arg('collection_id') < 0 THEN
+      collection_id IS NULL
+    ELSE
+      collection_id = sqlc.arg('collection_id')
+    END
+  ELSE
+    TRUE
+  END
 ORDER BY
   title ASC
 LIMIT sqlc.arg('limit') OFFSET sqlc.arg('offset');
@@ -19,7 +29,17 @@ LIMIT sqlc.arg('limit') OFFSET sqlc.arg('offset');
 SELECT
   COUNT(*) AS count
 FROM
-  feeds;
+  feeds
+WHERE
+  CASE WHEN sqlc.arg('filter_by_collection_id') THEN
+    CASE WHEN sqlc.arg('collection_id') < 0 THEN
+      collection_id IS NULL
+    ELSE
+      collection_id = sqlc.arg('collection_id')
+    END
+  ELSE
+    TRUE
+  END;
 
 -- name: GetFeed :one
 SELECT

@@ -28,13 +28,22 @@ func (h *Handler) ListFeeds(ctx context.Context, request api.ListFeedsRequestObj
 			params.Offset = (int64(*request.Params.Page) - 1) * params.Limit
 		}
 	}
+	collectionID := request.Params.CollectionId
+	if collectionID != nil {
+		params.FilterByCollectionID = true
+		params.CollectionID = request.Params.CollectionId
+	}
 
 	result, err := qtx.ListFeeds(ctx, params)
 	if err != nil {
 		return nil, err
 	}
 
-	count, err := qtx.CountFeeds(ctx)
+	params2 := database.CountFeedsParams{
+		FilterByCollectionID: params.FilterByCollectionID,
+		CollectionID:         params.CollectionID,
+	}
+	count, err := qtx.CountFeeds(ctx, params2)
 	if err != nil {
 		return nil, err
 	}
@@ -88,13 +97,9 @@ func (h *Handler) GetFeed(ctx context.Context, request api.GetFeedRequestObject)
 }
 
 func (h *Handler) CreateFeed(ctx context.Context, request api.CreateFeedRequestObject) (api.CreateFeedResponseObject, error) {
-	handleError := func(err error) api.CreateFeed400JSONResponse {
-		return api.CreateFeed400JSONResponse{Message: err.Error()}
-	}
-
 	result, err := h.worker.Run(ctx, request.Body.Url)
 	if err != nil {
-		return handleError(err), nil
+		return api.CreateFeed400JSONResponse{Message: err.Error()}, nil
 	}
 
 	response := api.CreateFeed201JSONResponse{

@@ -15,10 +15,25 @@ SELECT
   COUNT(*) AS count
 FROM
   feeds
+WHERE
+  CASE WHEN ?1 THEN
+    CASE WHEN ?2 < 0 THEN
+      collection_id IS NULL
+    ELSE
+      collection_id = ?2
+    END
+  ELSE
+    TRUE
+  END
 `
 
-func (q *Queries) CountFeeds(ctx context.Context) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countFeeds)
+type CountFeedsParams struct {
+	FilterByCollectionID interface{}
+	CollectionID         interface{}
+}
+
+func (q *Queries) CountFeeds(ctx context.Context, arg CountFeedsParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countFeeds, arg.FilterByCollectionID, arg.CollectionID)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -96,14 +111,26 @@ SELECT
       AND fe.has_read = FALSE) AS unreadCount
 FROM
   feeds
+WHERE
+  CASE WHEN ?1 THEN
+    CASE WHEN ?2 < 0 THEN
+      collection_id IS NULL
+    ELSE
+      collection_id = ?2
+    END
+  ELSE
+    TRUE
+  END
 ORDER BY
   title ASC
-LIMIT ?2 OFFSET ?1
+LIMIT ?4 OFFSET ?3
 `
 
 type ListFeedsParams struct {
-	Offset int64
-	Limit  int64
+	FilterByCollectionID interface{}
+	CollectionID         interface{}
+	Offset               int64
+	Limit                int64
 }
 
 type ListFeedsRow struct {
@@ -116,7 +143,12 @@ type ListFeedsRow struct {
 }
 
 func (q *Queries) ListFeeds(ctx context.Context, arg ListFeedsParams) ([]ListFeedsRow, error) {
-	rows, err := q.db.QueryContext(ctx, listFeeds, arg.Offset, arg.Limit)
+	rows, err := q.db.QueryContext(ctx, listFeeds,
+		arg.FilterByCollectionID,
+		arg.CollectionID,
+		arg.Offset,
+		arg.Limit,
+	)
 	if err != nil {
 		return nil, err
 	}
