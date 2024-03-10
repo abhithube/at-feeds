@@ -1,18 +1,18 @@
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { Feed } from '@/lib/types'
+import { Collection, Feed } from '@/lib/types'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { Bookmark, Home, Plus, Settings } from 'lucide-react'
+import { CollectionsAccordion } from './collections-accordion'
 import { FeedItem } from './feed-item'
 import { Logo } from './logo'
 
 type SidebarProps = {
   feeds: Feed[]
-  hasMore?: boolean
-  fetchMore?: () => void
+  collections: Collection[]
 }
 
-export const Sidebar = ({ feeds }: SidebarProps) => {
+export const Sidebar = ({ feeds, collections }: SidebarProps) => {
   const navigate = useNavigate()
 
   return (
@@ -60,8 +60,13 @@ export const Sidebar = ({ feeds }: SidebarProps) => {
           </Button>
         </div>
         <div className="space-y-1 px-4 pt-2">
-          {feeds.length > 0 ? (
-            feeds.map((feed) => <FeedItem key={feed.id} feed={feed} />)
+          {feeds.length > 0 || collections.length > 0 ? (
+            <>
+              <CollectionsAccordion collections={collections} />
+              {feeds.map((feed) => (
+                <FeedItem key={feed.id} feed={feed} />
+              ))}
+            </>
           ) : (
             <div className="text-sm font-light">
               You have not subscribed to any feeds yet. Click + to add one.

@@ -1,0 +1,28 @@
+import { feedsQueryOptions } from '@/lib/query'
+import { Collection } from '@/lib/types'
+import { useQuery } from '@tanstack/react-query'
+import { Loader2 } from 'lucide-react'
+import { FeedItem } from './feed-item'
+
+type CollectionItemListProps = {
+  collection: Collection
+}
+
+export function CollectionItemList({ collection }: CollectionItemListProps) {
+  const { data: feeds } = useQuery(
+    feedsQueryOptions({
+      collectionId: collection.id,
+      limit: -1,
+    }),
+  )
+
+  if (!feeds) return <Loader2 className="mx-auto mb-2 mt-1 animate-spin" />
+
+  return (
+    <div className="pl-4">
+      {feeds.data.map((feed) => (
+        <FeedItem key={feed.id} feed={feed} />
+      ))}
+    </div>
+  )
+}

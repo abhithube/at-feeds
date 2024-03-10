@@ -2,8 +2,14 @@ import { components, operations } from './openapi'
 
 type schema = components['schemas']
 
+export type Collection = schema['Collection']
 export type Feed = schema['Feed']
 export type Entry = schema['FeedEntry']
+
+export type ListCollectionsQuery = Omit<
+  NonNullable<operations['listCollections']['parameters']['query']>,
+  'page'
+>
 
 export type ListFeedsQuery = Omit<
   NonNullable<operations['listFeeds']['parameters']['query']>,

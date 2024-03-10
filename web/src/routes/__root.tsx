@@ -6,8 +6,8 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from '@/components/ui/resizable'
-import { ensureInfiniteQueryData, feedsQueryOptions } from '@/lib/query'
-import { QueryClient, useInfiniteQuery } from '@tanstack/react-query'
+import { collectionsQueryOptions, feedsQueryOptions } from '@/lib/query'
+import { QueryClient, useQuery } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { Outlet, createRootRouteWithContext } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/router-devtools'
@@ -21,12 +21,19 @@ export const Route = createRootRouteWithContext<{
   queryClient: QueryClient
 }>()({
   loader: async ({ context }) => {
-    await ensureInfiniteQueryData(
-      context.queryClient,
-      feedsQueryOptions({
-        limit: -1,
-      }) as any,
-    )
+    await Promise.all([
+      context.queryClient.ensureQueryData(
+        collectionsQueryOptions({
+          limit: -1,
+        }),
+      ),
+      context.queryClient.ensureQueryData(
+        feedsQueryOptions({
+          collectionId: -1,
+          limit: -1,
+        }),
+      ),
+    ])
   },
   component: Component,
 })
@@ -34,27 +41,26 @@ export const Route = createRootRouteWithContext<{
 function Component() {
   const { modal } = Route.useSearch<{ modal: Modal }>()
 
-  const {
-    data: feeds,
-    hasNextPage,
-    fetchNextPage,
-  } = useInfiniteQuery(
+  const { data: feeds } = useQuery(
     feedsQueryOptions({
+      collectionId: -1,
       limit: -1,
     }),
   )
 
-  if (!feeds) return
+  const { data: collections } = useQuery(
+    collectionsQueryOptions({
+      limit: -1,
+    }),
+  )
+
+  if (!feeds || !collections) return
 
   return (
     <ResizablePanelGroup direction="horizontal">
       <ResizablePanel minSize={15} defaultSize={20} maxSize={30} collapsible>
         <div className="h-screen overflow-y-auto">
-          <Sidebar
-            feeds={feeds.pages[0].data}
-            hasMore={hasNextPage}
-            fetchMore={fetchNextPage}
-          />
+          <Sidebar collections={collections.data} feeds={feeds.data} />
         </div>
       </ResizablePanel>
       <ResizableHandle />

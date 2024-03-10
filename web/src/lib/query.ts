@@ -5,7 +5,11 @@ import {
   queryOptions,
 } from '@tanstack/react-query'
 import { client } from './client'
-import { ListFeedEntriesQuery, ListFeedsQuery } from './types'
+import {
+  ListCollectionsQuery,
+  ListFeedEntriesQuery,
+  ListFeedsQuery,
+} from './types'
 
 export async function ensureInfiniteQueryData(
   queryClient: QueryClient,
@@ -17,24 +21,31 @@ export async function ensureInfiniteQueryData(
   }
 }
 
-export const feedsQueryOptions = (query: ListFeedsQuery) =>
-  infiniteQueryOptions({
-    queryKey: ['/feeds', query],
-    queryFn: async ({ pageParam }) => {
-      const res = await client.GET('/feeds', {
+export const collectionsQueryOptions = (query: ListCollectionsQuery) =>
+  queryOptions({
+    queryKey: ['/collections', query],
+    queryFn: async () => {
+      const res = await client.GET('/collections', {
         params: {
-          query: {
-            ...query,
-            page: pageParam ?? 1,
-          },
+          query,
         },
       })
 
       return res.data!
     },
-    initialPageParam: 1,
-    getNextPageParam: (lastPage, _, lastPageParam) => {
-      return lastPage.hasMore ? lastPageParam + 1 : undefined
+  })
+
+export const feedsQueryOptions = (query: ListFeedsQuery) =>
+  queryOptions({
+    queryKey: ['/feeds', query],
+    queryFn: async () => {
+      const res = await client.GET('/feeds', {
+        params: {
+          query,
+        },
+      })
+
+      return res.data!
     },
   })
 

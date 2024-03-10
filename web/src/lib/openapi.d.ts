@@ -5,6 +5,10 @@
 
 
 export interface paths {
+  "/collections": {
+    get: operations["listCollections"];
+    post: operations["createCollection"];
+  };
   "/feeds": {
     get: operations["listFeeds"];
     post: operations["createFeed"];
@@ -31,6 +35,10 @@ export type webhooks = Record<string, never>;
 
 export interface components {
   schemas: {
+    Collection: {
+      id: number;
+      title: string;
+    };
     Feed: {
       id: number;
       /** Format: uri */
@@ -54,6 +62,9 @@ export interface components {
       thumbnailUrl: string | null;
       hasRead: boolean;
       feedId: number;
+    };
+    CreateCollection: {
+      title: string;
     };
     CreateFeed: {
       /** Format: uri */
@@ -81,11 +92,53 @@ export type external = Record<string, never>;
 
 export interface operations {
 
+  listCollections: {
+    parameters: {
+      query?: {
+        limit?: number;
+        page?: number;
+        parentId?: number;
+      };
+    };
+    responses: {
+      /** @description Paginated collection list response */
+      200: {
+        content: {
+          "application/json": {
+            hasMore: boolean;
+            data: components["schemas"]["Collection"][];
+          };
+        };
+      };
+    };
+  };
+  createCollection: {
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CreateCollection"];
+      };
+    };
+    responses: {
+      /** @description Collection response */
+      201: {
+        content: {
+          "application/json": components["schemas"]["Collection"];
+        };
+      };
+      /** @description Invalid collection response */
+      400: {
+        content: {
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+  };
   listFeeds: {
     parameters: {
       query?: {
         limit?: number;
         page?: number;
+        collectionId?: number;
       };
     };
     responses: {
