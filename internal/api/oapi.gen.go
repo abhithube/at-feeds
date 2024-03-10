@@ -25,7 +25,8 @@ type Collection struct {
 
 // CreateCollection defines model for CreateCollection.
 type CreateCollection struct {
-	Title string `json:"title"`
+	ParentId *int   `json:"parentId,omitempty"`
+	Title    string `json:"title"`
 }
 
 // CreateFeed defines model for CreateFeed.
@@ -86,8 +87,9 @@ type ListFeedEntriesParams struct {
 
 // ListFeedsParams defines parameters for ListFeeds.
 type ListFeedsParams struct {
-	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
-	Page  *int `form:"page,omitempty" json:"page,omitempty"`
+	Limit        *int `form:"limit,omitempty" json:"limit,omitempty"`
+	Page         *int `form:"page,omitempty" json:"page,omitempty"`
+	CollectionId *int `form:"collectionId,omitempty" json:"collectionId,omitempty"`
 }
 
 // CreateCollectionJSONRequestBody defines body for CreateCollection for application/json ContentType.
@@ -329,6 +331,14 @@ func (siw *ServerInterfaceWrapper) ListFeeds(w http.ResponseWriter, r *http.Requ
 	err = runtime.BindQueryParameter("form", true, false, "page", r.URL.Query(), &params.Page)
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "collectionId" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "collectionId", r.URL.Query(), &params.CollectionId)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "collectionId", Err: err})
 		return
 	}
 

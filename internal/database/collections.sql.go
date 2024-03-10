@@ -17,7 +17,11 @@ FROM
   collections
 WHERE
   CASE WHEN ?1 THEN
-    parent_id = ?2
+    CASE WHEN ?2 < 0 THEN
+      parent_id IS NULL
+    ELSE
+      parent_id = ?2
+    END
   ELSE
     TRUE
   END
@@ -25,7 +29,7 @@ WHERE
 
 type CountCollectionsParams struct {
 	FilterByParentID interface{}
-	ParentID         sql.NullInt64
+	ParentID         interface{}
 }
 
 func (q *Queries) CountCollections(ctx context.Context, arg CountCollectionsParams) (int64, error) {
@@ -45,10 +49,26 @@ func (q *Queries) DeleteCollection(ctx context.Context, id int64) error {
 	return err
 }
 
+const getCollection = `-- name: GetCollection :one
+SELECT
+  id, title, parent_id
+FROM
+  collections
+WHERE
+  id = ?1
+`
+
+func (q *Queries) GetCollection(ctx context.Context, id int64) (Collection, error) {
+	row := q.db.QueryRowContext(ctx, getCollection, id)
+	var i Collection
+	err := row.Scan(&i.ID, &i.Title, &i.ParentID)
+	return i, err
+}
+
 const insertCollection = `-- name: InsertCollection :one
 INSERT INTO collections(title, parent_id)
   VALUES (?1, ?2)
-ON CONFLICT (title)
+ON CONFLICT (title, parent_id)
   DO NOTHING
 RETURNING
   id, title, parent_id
@@ -73,7 +93,11 @@ FROM
   collections
 WHERE
   CASE WHEN ?1 THEN
-    parent_id = ?2
+    CASE WHEN ?2 < 0 THEN
+      parent_id IS NULL
+    ELSE
+      parent_id = ?2
+    END
   ELSE
     TRUE
   END
@@ -84,7 +108,7 @@ LIMIT ?4 OFFSET ?3
 
 type ListCollectionsParams struct {
 	FilterByParentID interface{}
-	ParentID         sql.NullInt64
+	ParentID         interface{}
 	Offset           int64
 	Limit            int64
 }

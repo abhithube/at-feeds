@@ -3,6 +3,8 @@ package handler
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"fmt"
 
 	"github.com/abhithube/at-feeds/internal/api"
 	"github.com/abhithube/at-feeds/internal/database"
@@ -25,9 +27,10 @@ func (h *Handler) ListCollections(ctx context.Context, request api.ListCollectio
 			params.Offset = (int64(*request.Params.Page) - 1) * params.Limit
 		}
 	}
-	if request.Params.ParentId != nil {
+	parentID := request.Params.ParentId
+	if parentID != nil {
 		params.FilterByParentID = true
-		params.ParentID = sql.NullInt64{Int64: int64(*request.Params.ParentId), Valid: true}
+		params.ParentID = parentID
 	}
 
 	result, err := qtx.ListCollections(ctx, params)
@@ -64,16 +67,40 @@ func (h *Handler) ListCollections(ctx context.Context, request api.ListCollectio
 
 func (h *Handler) CreateCollection(ctx context.Context, request api.CreateCollectionRequestObject) (api.CreateCollectionResponseObject, error) {
 	title := request.Body.Title
+	parentID := request.Body.ParentId
+
 	if len(title) == 0 {
 		return api.CreateCollection400JSONResponse{Message: "'title' cannot be empty"}, nil
 	}
 
+	tx, err := h.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	defer database.Rollback(tx)
+
+	qtx := h.queries.WithTx(tx)
+
 	params := database.InsertCollectionParams{
 		Title: title,
 	}
-	result, err := h.queries.InsertCollection(ctx, params)
+	if parentID != nil {
+		params.ParentID = sql.NullInt64{Int64: int64(*parentID), Valid: true}
+
+		_, err := qtx.GetCollection(ctx, int64(*parentID))
+		if err != nil {
+			return api.CreateCollection400JSONResponse{Message: "Invalid parent ID"}, nil
+		}
+	}
+	result, err := qtx.InsertCollection(ctx, params)
 	if err != nil {
-		return api.CreateCollection400JSONResponse{Message: err.Error()}, nil
+		msg := err.Error()
+		if errors.Is(err, sql.ErrNoRows) {
+			msg = fmt.Sprintf("Collection already exists with title '%s' and parent '%d'", params.Title, params.ParentID.Int64)
+		}
+
+		return api.CreateCollection400JSONResponse{Message: msg}, nil
 	}
 
 	response := api.CreateCollection201JSONResponse{
@@ -81,5 +108,5 @@ func (h *Handler) CreateCollection(ctx context.Context, request api.CreateCollec
 		Title: result.Title,
 	}
 
-	return response, nil
+	return response, tx.Commit()
 }

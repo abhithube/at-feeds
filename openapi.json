@@ -526,6 +526,9 @@
         "properties": {
           "title": {
             "type": "string"
+          },
+          "parentId": {
+            "type": "integer"
           }
         }
       },
