@@ -73,6 +73,16 @@ ON CONFLICT (link)
   RETURNING
     *;
 
+-- name: UpdateFeed :one
+UPDATE
+  feeds
+SET
+  collection_id = coalesce(sqlc.narg('collection_id'), collection_id)
+WHERE
+  id = sqlc.arg('id')
+RETURNING
+  *;
+
 -- name: DeleteFeed :exec
 DELETE FROM feeds
 WHERE id = sqlc.arg('id');

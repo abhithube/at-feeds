@@ -117,6 +117,54 @@ func (h *Handler) CreateFeed(ctx context.Context, request api.CreateFeedRequestO
 	return response, nil
 }
 
+func (h *Handler) UpdateFeed(ctx context.Context, request api.UpdateFeedRequestObject) (api.UpdateFeedResponseObject, error) {
+	tx, err := h.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	defer database.Rollback(tx)
+
+	qtx := h.queries.WithTx(tx)
+
+	collectionID := request.Body.CollectionId
+
+	params := database.UpdateFeedParams{
+		ID: int64(request.Id),
+	}
+	if collectionID != nil {
+		params.CollectionID = sql.NullInt64{Int64: int64(*collectionID), Valid: true}
+	}
+
+	_, err = qtx.UpdateFeed(ctx, params)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return api.UpdateFeed404JSONResponse{Message: "Feed not found"}, nil
+		}
+
+		return nil, err
+	}
+
+	result, err := qtx.GetFeed(ctx, int64(request.Id))
+	if err != nil {
+		return nil, err
+	}
+
+	entryCount := int(result.Entrycount)
+	response := api.UpdateFeed200JSONResponse{
+		Id:          int(result.ID),
+		Link:        result.Link,
+		Title:       result.Title,
+		EntryCount:  &entryCount,
+		UnreadCount: int(result.Unreadcount),
+	}
+	if result.Url.Valid {
+		response.Url = &result.Url.String
+	}
+
+	return response, tx.Commit()
+}
+
 func (h *Handler) DeleteFeed(ctx context.Context, request api.DeleteFeedRequestObject) (api.DeleteFeedResponseObject, error) {
 	err := h.queries.DeleteFeed(ctx, int64(request.Id))
 	if err != nil {

@@ -177,6 +177,35 @@ func (q *Queries) ListFeeds(ctx context.Context, arg ListFeedsParams) ([]ListFee
 	return items, nil
 }
 
+const updateFeed = `-- name: UpdateFeed :one
+UPDATE
+  feeds
+SET
+  collection_id = coalesce(?1, collection_id)
+WHERE
+  id = ?2
+RETURNING
+  id, url, link, title, collection_id
+`
+
+type UpdateFeedParams struct {
+	CollectionID sql.NullInt64
+	ID           int64
+}
+
+func (q *Queries) UpdateFeed(ctx context.Context, arg UpdateFeedParams) (Feed, error) {
+	row := q.db.QueryRowContext(ctx, updateFeed, arg.CollectionID, arg.ID)
+	var i Feed
+	err := row.Scan(
+		&i.ID,
+		&i.Url,
+		&i.Link,
+		&i.Title,
+		&i.CollectionID,
+	)
+	return i, err
+}
+
 const upsertFeed = `-- name: UpsertFeed :one
 INSERT INTO feeds(url, link, title)
   VALUES (?1, ?2, ?3)

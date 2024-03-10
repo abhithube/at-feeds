@@ -226,6 +226,51 @@
           }
         }
       },
+      "patch": {
+        "operationId": "updateFeed",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateFeed"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated feed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Feed"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Feed not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
       "delete": {
         "operationId": "deleteFeed",
         "parameters": [
@@ -539,6 +584,14 @@
           "url": {
             "type": "string",
             "format": "uri"
+          }
+        }
+      },
+      "UpdateFeed": {
+        "type": "object",
+        "properties": {
+          "collectionId": {
+            "type": "integer"
           }
         }
       },

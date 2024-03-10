@@ -65,6 +65,11 @@ type FeedEntry struct {
 // File defines model for File.
 type File = openapi_types.File
 
+// UpdateFeed defines model for UpdateFeed.
+type UpdateFeed struct {
+	CollectionId *int `json:"collectionId,omitempty"`
+}
+
 // UpdateFeedEntry defines model for UpdateFeedEntry.
 type UpdateFeedEntry struct {
 	HasRead *bool `json:"hasRead,omitempty"`
@@ -101,6 +106,9 @@ type CreateFeedJSONRequestBody = CreateFeed
 // UpdateFeedEntryJSONRequestBody defines body for UpdateFeedEntry for application/json ContentType.
 type UpdateFeedEntryJSONRequestBody = UpdateFeedEntry
 
+// UpdateFeedJSONRequestBody defines body for UpdateFeed for application/json ContentType.
+type UpdateFeedJSONRequestBody = UpdateFeed
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 
@@ -133,6 +141,9 @@ type ServerInterface interface {
 
 	// (GET /feeds/{id})
 	GetFeed(w http.ResponseWriter, r *http.Request, id int)
+
+	// (PATCH /feeds/{id})
+	UpdateFeed(w http.ResponseWriter, r *http.Request, id int)
 }
 
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
@@ -186,6 +197,11 @@ func (_ Unimplemented) DeleteFeed(w http.ResponseWriter, r *http.Request, id int
 
 // (GET /feeds/{id})
 func (_ Unimplemented) GetFeed(w http.ResponseWriter, r *http.Request, id int) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (PATCH /feeds/{id})
+func (_ Unimplemented) UpdateFeed(w http.ResponseWriter, r *http.Request, id int) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -485,6 +501,32 @@ func (siw *ServerInterfaceWrapper) GetFeed(w http.ResponseWriter, r *http.Reques
 	handler.ServeHTTP(w, r.WithContext(ctx))
 }
 
+// UpdateFeed operation middleware
+func (siw *ServerInterfaceWrapper) UpdateFeed(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var err error
+
+	// ------------- Path parameter "id" -------------
+	var id int
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateFeed(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
 type UnescapedCookieParamError struct {
 	ParamName string
 	Err       error
@@ -627,6 +669,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/feeds/{id}", wrapper.GetFeed)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/feeds/{id}", wrapper.UpdateFeed)
 	})
 
 	return r
@@ -883,6 +928,33 @@ func (response GetFeed404JSONResponse) VisitGetFeedResponse(w http.ResponseWrite
 	return json.NewEncoder(w).Encode(response)
 }
 
+type UpdateFeedRequestObject struct {
+	Id   int `json:"id"`
+	Body *UpdateFeedJSONRequestBody
+}
+
+type UpdateFeedResponseObject interface {
+	VisitUpdateFeedResponse(w http.ResponseWriter) error
+}
+
+type UpdateFeed200JSONResponse Feed
+
+func (response UpdateFeed200JSONResponse) VisitUpdateFeedResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdateFeed404JSONResponse Error
+
+func (response UpdateFeed404JSONResponse) VisitUpdateFeedResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 
@@ -915,6 +987,9 @@ type StrictServerInterface interface {
 
 	// (GET /feeds/{id})
 	GetFeed(ctx context.Context, request GetFeedRequestObject) (GetFeedResponseObject, error)
+
+	// (PATCH /feeds/{id})
+	UpdateFeed(ctx context.Context, request UpdateFeedRequestObject) (UpdateFeedResponseObject, error)
 }
 
 type StrictHandlerFunc = strictnethttp.StrictHTTPHandlerFunc
@@ -1215,6 +1290,39 @@ func (sh *strictHandler) GetFeed(w http.ResponseWriter, r *http.Request, id int)
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(GetFeedResponseObject); ok {
 		if err := validResponse.VisitGetFeedResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateFeed operation middleware
+func (sh *strictHandler) UpdateFeed(w http.ResponseWriter, r *http.Request, id int) {
+	var request UpdateFeedRequestObject
+
+	request.Id = id
+
+	var body UpdateFeedJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateFeed(ctx, request.(UpdateFeedRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateFeed")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateFeedResponseObject); ok {
+		if err := validResponse.VisitUpdateFeedResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
