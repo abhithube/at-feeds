@@ -26,7 +26,7 @@ export const Sidebar = ({ feeds, collections }: SidebarProps) => {
           to="/"
           activeProps={{ className: 'bg-muted text-secondary' }}
         >
-          <Home className="h-4 w-4" />
+          <Home className="h-4 w-4 shrink-0" />
           <span className="grow truncate">Home</span>
         </Link>
         <Link
@@ -34,7 +34,7 @@ export const Sidebar = ({ feeds, collections }: SidebarProps) => {
           to="/saved"
           activeProps={{ className: 'bg-muted text-secondary' }}
         >
-          <Bookmark className="h-4 w-4" />
+          <Bookmark className="h-4 w-4 shrink-0" />
           <span className="grow truncate">Saved</span>
         </Link>
       </div>
@@ -87,7 +87,7 @@ export const Sidebar = ({ feeds, collections }: SidebarProps) => {
             })
           }}
         >
-          <Settings className="h-4 w-4" />
+          <Settings className="h-4 w-4 shrink-0" />
           <span className="grow truncate text-left">Settings</span>
         </Button>
       </div>
