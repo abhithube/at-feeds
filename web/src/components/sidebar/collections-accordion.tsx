@@ -5,7 +5,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion'
 import { Collection } from '@/lib/types'
-import { Folder } from 'lucide-react'
+import { FolderClosed, FolderOpen } from 'lucide-react'
 import { CollectionItemList } from './collection-item-list'
 
 type CollectionsAccordionProps = {
@@ -19,9 +19,10 @@ export function CollectionsAccordion({
     <Accordion className="ml-4" type="multiple">
       {collections.map((collection) => (
         <AccordionItem key={collection.id} value={`${collection.id}`}>
-          <AccordionTrigger className="mr-2">
-            <div className="flex items-center space-x-4">
-              <Folder className="h-4 w-4" />
+          <AccordionTrigger className="group mr-2">
+            <div className="flex items-center">
+              <FolderClosed className="mr-4 h-4 w-4 group-[&[data-state=open]]:hidden" />
+              <FolderOpen className="mr-4 h-4 w-4 group-[&[data-state=closed]]:hidden" />
               <span>{collection.title}</span>
             </div>
           </AccordionTrigger>
