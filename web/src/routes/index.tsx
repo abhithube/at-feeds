@@ -1,4 +1,4 @@
-import { LIMIT } from '@/lib/constants'
+import { PAGINATION_LIMIT } from '@/lib/constants'
 import { ensureInfiniteQueryData, feedEntriesQueryOptions } from '@/lib/query'
 import { EntryGrid } from '@/routes/-entries/entry-grid'
 import { useInfiniteQuery } from '@tanstack/react-query'
@@ -10,7 +10,7 @@ export const Route = createFileRoute('/')({
     await ensureInfiniteQueryData(
       context.queryClient,
       feedEntriesQueryOptions({
-        limit: LIMIT,
+        limit: PAGINATION_LIMIT,
       }) as any,
     )
   },
@@ -24,7 +24,7 @@ function Component() {
     fetchNextPage,
   } = useInfiniteQuery(
     feedEntriesQueryOptions({
-      limit: LIMIT,
+      limit: PAGINATION_LIMIT,
     }),
   )
 

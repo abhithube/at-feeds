@@ -1,4 +1,4 @@
-import { LIMIT } from '@/lib/constants'
+import { PAGINATION_LIMIT } from '@/lib/constants'
 import {
   ensureInfiniteQueryData,
   feedEntriesQueryOptions,
@@ -17,7 +17,7 @@ export const Route = createFileRoute('/feeds/$feedId')({
         context.queryClient,
         feedEntriesQueryOptions({
           feedId: +params.feedId,
-          limit: LIMIT,
+          limit: PAGINATION_LIMIT,
         }) as any,
       ),
     ])
@@ -35,7 +35,7 @@ function Component() {
   } = useInfiniteQuery(
     feedEntriesQueryOptions({
       feedId: +feedId,
-      limit: LIMIT,
+      limit: PAGINATION_LIMIT,
     }),
   )
 
