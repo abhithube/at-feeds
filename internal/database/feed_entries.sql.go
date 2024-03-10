@@ -158,7 +158,7 @@ const updateFeedEntry = `-- name: UpdateFeedEntry :one
 UPDATE
   feed_entries
 SET
-  has_read = ?1
+  has_read = coalesce(?1, has_read)
 WHERE
   feed_id = ?2
   AND entry_id = ?3
@@ -167,7 +167,7 @@ RETURNING
 `
 
 type UpdateFeedEntryParams struct {
-	HasRead int64
+	HasRead sql.NullInt64
 	FeedID  int64
 	EntryID int64
 }

@@ -107,30 +107,24 @@ func (h *Handler) UpdateFeedEntry(ctx context.Context, request api.UpdateFeedEnt
 
 	qtx := h.queries.WithTx(tx)
 
-	params := database.GetFeedEntryParams{
-		FeedID:  int64(request.FeedId),
-		EntryID: int64(request.EntryId),
-	}
-	if _, err := qtx.GetFeedEntry(ctx, params); err != nil {
-		if err == sql.ErrNoRows {
-			return api.UpdateFeedEntry404JSONResponse{Message: "Entry not found"}, nil
-		}
+	hasRead := request.Body.HasRead
 
-		return nil, err
-	}
-
-	var hasRead int64
-	if request.Body.HasRead {
-		hasRead = 1
+	var hasReadInt int64
+	if hasRead != nil && *hasRead {
+		hasReadInt = 1
 	}
 	params2 := database.UpdateFeedEntryParams{
-		FeedID:  params.FeedID,
-		EntryID: params.EntryID,
-		HasRead: hasRead,
+		FeedID:  int64(request.FeedId),
+		EntryID: int64(request.EntryId),
+		HasRead: sql.NullInt64{Int64: hasReadInt, Valid: hasRead != nil},
 	}
 
 	result, err := qtx.UpdateFeedEntry(ctx, params2)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return api.UpdateFeedEntry404JSONResponse{Message: "Entry not found"}, nil
+		}
+
 		return nil, err
 	}
 

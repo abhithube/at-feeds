@@ -67,7 +67,7 @@ type File = openapi_types.File
 
 // UpdateFeedEntry defines model for UpdateFeedEntry.
 type UpdateFeedEntry struct {
-	HasRead bool `json:"hasRead"`
+	HasRead *bool `json:"hasRead,omitempty"`
 }
 
 // ListCollectionsParams defines parameters for ListCollections.

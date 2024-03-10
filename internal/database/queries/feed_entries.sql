@@ -55,7 +55,7 @@ ON CONFLICT (feed_id, entry_id)
 UPDATE
   feed_entries
 SET
-  has_read = sqlc.arg('has_read')
+  has_read = coalesce(sqlc.narg('has_read'), has_read)
 WHERE
   feed_id = sqlc.arg('feed_id')
   AND entry_id = sqlc.arg('entry_id')
