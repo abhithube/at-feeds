@@ -3,9 +3,9 @@ import { Separator } from '@/components/ui/separator'
 import { Collection, Feed } from '@/lib/types'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { Bookmark, Home, Plus, Settings } from 'lucide-react'
+import { Logo } from '../../components/logo'
 import { CollectionsAccordion } from './collections-accordion'
 import { FeedItem } from './feed-item'
-import { Logo } from './logo'
 
 type SidebarProps = {
   collections: Collection[]

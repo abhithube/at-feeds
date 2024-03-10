@@ -1,12 +1,12 @@
 import { SettingsModal } from '@/components/settings/settings-modal'
-import { AddFeedModal } from '@/components/sidebar/add-feed-modal'
-import { Sidebar } from '@/components/sidebar/sidebar'
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from '@/components/ui/resizable'
 import { collectionsQueryOptions, feedsQueryOptions } from '@/lib/query'
+import { AddFeedModal } from '@/routes/-sidebar/add-feed-modal'
+import { Sidebar } from '@/routes/-sidebar/sidebar'
 import { QueryClient, useQuery } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { Outlet, createRootRouteWithContext } from '@tanstack/react-router'

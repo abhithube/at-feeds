@@ -2,7 +2,7 @@ import { Feed } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { Link } from '@tanstack/react-router'
 import { useState } from 'react'
-import { Favicon } from '../favicon'
+import { Favicon } from '../../components/favicon'
 import { FeedActions } from './feed-actions/feed-actions'
 
 type FeedItemProps = {
