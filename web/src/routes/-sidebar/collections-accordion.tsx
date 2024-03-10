@@ -48,7 +48,7 @@ export function CollectionsAccordion({
             <div className="flex items-center">
               <FolderClosed className="mr-4 h-4 w-4 shrink-0 group-[&[data-state=open]]:hidden" />
               <FolderOpen className="mr-4 h-4 w-4 shrink-0 group-[&[data-state=closed]]:hidden" />
-              <span>{collection.title}</span>
+              <span className="text-sm">{collection.title}</span>
             </div>
           </AccordionTrigger>
           <AccordionContent>
