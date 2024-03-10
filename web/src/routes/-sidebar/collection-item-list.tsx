@@ -29,7 +29,7 @@ export function CollectionItemList({ collection }: CollectionItemListProps) {
   }
 
   return (
-    <div className="pl-4">
+    <div className="space-y-1 pl-4">
       {collections.data.length > 0 && (
         <CollectionsAccordion collections={collections.data} />
       )}
