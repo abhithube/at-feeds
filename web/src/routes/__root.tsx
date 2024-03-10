@@ -1,10 +1,10 @@
-import { SettingsModal } from '@/components/settings/settings-modal'
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from '@/components/ui/resizable'
 import { collectionsQueryOptions, feedsQueryOptions } from '@/lib/query'
+import { SettingsModal } from '@/routes/-settings/settings-modal'
 import { AddFeedModal } from '@/routes/-sidebar/add-feed-modal'
 import { Sidebar } from '@/routes/-sidebar/sidebar'
 import { QueryClient, useQuery } from '@tanstack/react-query'
