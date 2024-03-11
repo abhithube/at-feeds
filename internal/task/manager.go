@@ -79,7 +79,7 @@ func (m *Manager) Parse(_ context.Context, resp *http.Response) (*parser.Feed, e
 			return nil, err
 		}
 
-		feed.URL = resp.Request.URL.String()
+		feed.URL = feedURL
 		return feed, nil
 	}
 
