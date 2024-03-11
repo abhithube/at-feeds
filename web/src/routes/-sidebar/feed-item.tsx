@@ -24,7 +24,7 @@ export function FeedItem({ feed }: FeedItemProps) {
     >
       <Favicon domain={new URL(feed.link).hostname} />
       <span className="grow truncate">{feed.title}</span>
-      <div className="flex w-[3ch] justify-center">
+      <div className="flex w-[3ch] shrink-0 justify-center">
         <span
           className={cn(
             'tabular-nums text-muted-foreground group-hover:hidden group-[.active]:text-secondary',
