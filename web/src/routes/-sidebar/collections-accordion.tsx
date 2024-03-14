@@ -5,7 +5,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion'
 import { PRELOAD_DELAY } from '@/lib/constants'
-import { collectionsQueryOptions, feedsQueryOptions } from '@/lib/query'
+import { feedsQueryOptions } from '@/lib/query'
 import { Collection } from '@/lib/types'
 import { QueryClient, useQueryClient } from '@tanstack/react-query'
 import { FolderClosed, FolderOpen } from 'lucide-react'
@@ -36,7 +36,7 @@ export function CollectionsAccordion({
   }
 
   return (
-    <Accordion className="ml-4" type="multiple">
+    <Accordion type="multiple">
       {collections.map((collection) => (
         <AccordionItem
           key={collection.id}
@@ -44,10 +44,10 @@ export function CollectionsAccordion({
           onMouseEnter={() => handleMouseEnter(collection)}
           onMouseLeave={handleMouseLeave}
         >
-          <AccordionTrigger className="group mr-2">
+          <AccordionTrigger className="group/trigger rounded-md pl-4 hover:bg-muted/50">
             <div className="flex items-center">
-              <FolderClosed className="mr-4 h-4 w-4 shrink-0 group-[&[data-state=open]]:hidden" />
-              <FolderOpen className="mr-4 h-4 w-4 shrink-0 group-[&[data-state=closed]]:hidden" />
+              <FolderClosed className="mr-4 h-4 w-4 shrink-0 group-[&[data-state=open]]/trigger:hidden" />
+              <FolderOpen className="mr-4 h-4 w-4 shrink-0 group-[&[data-state=closed]]/trigger:hidden" />
               <span className="text-sm">{collection.title}</span>
             </div>
           </AccordionTrigger>
@@ -64,18 +64,10 @@ async function loadCollection(
   queryClient: QueryClient,
   collection: Collection,
 ) {
-  await Promise.all([
-    queryClient.ensureQueryData(
-      collectionsQueryOptions({
-        parentId: collection.id,
-        limit: -1,
-      }),
-    ),
-    queryClient.ensureQueryData(
-      feedsQueryOptions({
-        collectionId: collection.id,
-        limit: -1,
-      }),
-    ),
-  ])
+  await queryClient.ensureQueryData(
+    feedsQueryOptions({
+      collectionId: collection.id,
+      limit: -1,
+    }),
+  )
 }

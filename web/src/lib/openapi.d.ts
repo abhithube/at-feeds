@@ -16,6 +16,7 @@ export interface paths {
   "/feeds/{id}": {
     get: operations["getFeed"];
     delete: operations["deleteFeed"];
+    patch: operations["updateFeed"];
   };
   "/feeds/{feedId}/entries/{entryId}": {
     patch: operations["updateFeedEntry"];
@@ -70,8 +71,11 @@ export interface components {
       /** Format: uri */
       url: string;
     };
+    UpdateFeed: {
+      collectionId?: number;
+    };
     UpdateFeedEntry: {
-      hasRead: boolean;
+      hasRead?: boolean;
     };
     /** Format: binary */
     File: string;
@@ -97,7 +101,6 @@ export interface operations {
       query?: {
         limit?: number;
         page?: number;
-        parentId?: number;
       };
     };
     responses: {
@@ -205,6 +208,32 @@ export interface operations {
       /** @description Successful response */
       204: {
         content: never;
+      };
+      /** @description Feed not found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+  };
+  updateFeed: {
+    parameters: {
+      path: {
+        id: number;
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["UpdateFeed"];
+      };
+    };
+    responses: {
+      /** @description Updated feed */
+      200: {
+        content: {
+          "application/json": components["schemas"]["Feed"];
+        };
       };
       /** @description Feed not found */
       404: {

@@ -15,8 +15,13 @@ export function FeedItem({ feed }: FeedItemProps) {
   return (
     <Link
       key={feed.id}
-      className="group flex w-full items-center justify-between space-x-4 rounded-md px-4 py-2 text-sm font-medium text-primary hover:bg-muted"
-      activeProps={{ className: 'bg-muted active text-secondary' }}
+      className="group flex w-full items-center justify-between space-x-4 rounded-md px-4 py-2 text-sm font-medium text-primary"
+      activeProps={{
+        className: 'bg-muted active text-secondary',
+      }}
+      inactiveProps={{
+        className: 'hover:bg-muted/50',
+      }}
       to="/feeds/$feedId"
       params={{
         feedId: `${feed.id}`,

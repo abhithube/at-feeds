@@ -1,8 +1,7 @@
-import { collectionsQueryOptions, feedsQueryOptions } from '@/lib/query'
+import { feedsQueryOptions } from '@/lib/query'
 import { Collection } from '@/lib/types'
 import { useQuery } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
-import { CollectionsAccordion } from './collections-accordion'
 import { FeedItem } from './feed-item'
 
 type CollectionItemListProps = {
@@ -10,13 +9,6 @@ type CollectionItemListProps = {
 }
 
 export function CollectionItemList({ collection }: CollectionItemListProps) {
-  const { data: collections } = useQuery(
-    collectionsQueryOptions({
-      parentId: collection.id,
-      limit: -1,
-    }),
-  )
-
   const { data: feeds } = useQuery(
     feedsQueryOptions({
       collectionId: collection.id,
@@ -24,18 +16,18 @@ export function CollectionItemList({ collection }: CollectionItemListProps) {
     }),
   )
 
-  if (!collections || !feeds) {
+  if (!feeds) {
     return <Loader2 className="mx-auto mb-2 mt-1 animate-spin" />
   }
 
   return (
-    <div className="space-y-1 pl-4">
-      {collections.data.length > 0 && (
-        <CollectionsAccordion collections={collections.data} />
-      )}
-      {feeds.data.map((feed) => (
-        <FeedItem key={feed.id} feed={feed} />
-      ))}
+    <div className="relative space-y-1">
+      <div className="ml-8 mt-1">
+        {feeds.data.map((feed) => (
+          <FeedItem key={feed.id} feed={feed} />
+        ))}
+      </div>
+      <div className="absolute bottom-1 left-1.5 top-0 ml-4 border-l-[0.5px] border-muted-foreground/50"></div>
     </div>
   )
 }

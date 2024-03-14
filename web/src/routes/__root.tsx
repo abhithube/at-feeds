@@ -24,7 +24,6 @@ export const Route = createRootRouteWithContext<{
     await Promise.all([
       context.queryClient.ensureQueryData(
         collectionsQueryOptions({
-          parentId: -1,
           limit: -1,
         }),
       ),
@@ -44,7 +43,6 @@ function Component() {
 
   const { data: collections } = useQuery(
     collectionsQueryOptions({
-      parentId: -1,
       limit: -1,
     }),
   )

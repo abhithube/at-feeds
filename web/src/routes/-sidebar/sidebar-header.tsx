@@ -10,7 +10,7 @@ export function SidebarHeader() {
       </div>
       <div className="space-y-1 px-4">
         <Link
-          className="group flex w-full items-center justify-between space-x-4 rounded-md px-4 py-2 text-sm font-medium text-primary hover:bg-muted"
+          className="flex w-full items-center justify-between space-x-4 rounded-md px-4 py-2 text-sm font-medium text-primary hover:bg-muted"
           to="/"
           activeProps={{ className: 'bg-muted text-secondary' }}
         >
@@ -18,7 +18,7 @@ export function SidebarHeader() {
           <span className="grow truncate">Home</span>
         </Link>
         <Link
-          className="group flex w-full items-center justify-between space-x-4 rounded-md px-4 py-2 text-sm font-medium text-primary hover:bg-muted"
+          className="flex w-full items-center justify-between space-x-4 rounded-md px-4 py-2 text-sm font-medium text-primary hover:bg-muted"
           to="/saved"
           activeProps={{ className: 'bg-muted text-secondary' }}
         >

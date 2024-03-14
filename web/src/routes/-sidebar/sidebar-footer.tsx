@@ -9,7 +9,7 @@ export function SidebarFooter() {
     <div className="p-4 pt-0">
       <Button
         variant="ghost"
-        className="group flex w-full items-center justify-between space-x-4 rounded-md px-4 py-2 text-sm font-medium text-primary"
+        className="flex w-full items-center justify-between space-x-4 rounded-md px-4 py-2 text-sm font-medium text-primary"
         onClick={() => {
           navigate({
             search: {
