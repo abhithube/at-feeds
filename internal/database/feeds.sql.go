@@ -7,16 +7,17 @@ package database
 
 import (
 	"context"
-	"database/sql"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const deleteFeed = `-- name: DeleteFeed :exec
 DELETE FROM feeds
-WHERE id = ?1
+WHERE id = $1
 `
 
-func (q *Queries) DeleteFeed(ctx context.Context, id int64) error {
-	_, err := q.db.ExecContext(ctx, deleteFeed, id)
+func (q *Queries) DeleteFeed(ctx context.Context, id int32) error {
+	_, err := q.db.Exec(ctx, deleteFeed, id)
 	return err
 }
 
@@ -29,33 +30,33 @@ SELECT
     FROM
       feed_entries fe
     WHERE
-      fe.feed_id = ?1) AS entryCount,
+      fe.feed_id = $1) AS entryCount,
 (
     SELECT
       count(*)
     FROM
       feed_entries fe
     WHERE
-      fe.feed_id = ?1
+      fe.feed_id = $1
       AND fe.has_read = FALSE) AS unreadCount
 FROM
   feeds
 WHERE
-  feeds.id = ?1
+  feeds.id = $1
 `
 
 type GetFeedRow struct {
-	ID           int64
-	Url          sql.NullString
+	ID           int32
+	Url          pgtype.Text
 	Link         string
 	Title        string
-	CollectionID sql.NullInt64
+	CollectionID pgtype.Int4
 	Entrycount   int64
 	Unreadcount  int64
 }
 
-func (q *Queries) GetFeed(ctx context.Context, id int64) (GetFeedRow, error) {
-	row := q.db.QueryRowContext(ctx, getFeed, id)
+func (q *Queries) GetFeed(ctx context.Context, id int32) (GetFeedRow, error) {
+	row := q.db.QueryRow(ctx, getFeed, id)
 	var i GetFeedRow
 	err := row.Scan(
 		&i.ID,
@@ -84,39 +85,39 @@ SELECT
 FROM
   feeds
 WHERE
-  CASE WHEN ?1 THEN
-    CASE WHEN ?2 < 0 THEN
+  CASE WHEN $1 THEN
+    CASE WHEN $2 < 0 THEN
       collection_id IS NULL
     ELSE
-      collection_id = ?2
+      collection_id = $2
     END
   ELSE
     TRUE
   END
 ORDER BY
   title ASC
-LIMIT ?4 OFFSET ?3
+LIMIT $4 OFFSET $3
 `
 
 type ListFeedsParams struct {
 	FilterByCollectionID interface{}
 	CollectionID         interface{}
-	Offset               int64
-	Limit                int64
+	Offset               int32
+	Limit                pgtype.Int4
 }
 
 type ListFeedsRow struct {
-	ID           int64
-	Url          sql.NullString
+	ID           int32
+	Url          pgtype.Text
 	Link         string
 	Title        string
-	CollectionID sql.NullInt64
+	CollectionID pgtype.Int4
 	TotalCount   int64
 	Unreadcount  int64
 }
 
 func (q *Queries) ListFeeds(ctx context.Context, arg ListFeedsParams) ([]ListFeedsRow, error) {
-	rows, err := q.db.QueryContext(ctx, listFeeds,
+	rows, err := q.db.Query(ctx, listFeeds,
 		arg.FilterByCollectionID,
 		arg.CollectionID,
 		arg.Offset,
@@ -142,9 +143,6 @@ func (q *Queries) ListFeeds(ctx context.Context, arg ListFeedsParams) ([]ListFee
 		}
 		items = append(items, i)
 	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
@@ -155,20 +153,20 @@ const updateFeed = `-- name: UpdateFeed :one
 UPDATE
   feeds
 SET
-  collection_id = coalesce(?1, collection_id)
+  collection_id = coalesce($1, collection_id)
 WHERE
-  id = ?2
+  id = $2
 RETURNING
   id, url, link, title, collection_id
 `
 
 type UpdateFeedParams struct {
-	CollectionID sql.NullInt64
-	ID           int64
+	CollectionID pgtype.Int4
+	ID           int32
 }
 
 func (q *Queries) UpdateFeed(ctx context.Context, arg UpdateFeedParams) (Feed, error) {
-	row := q.db.QueryRowContext(ctx, updateFeed, arg.CollectionID, arg.ID)
+	row := q.db.QueryRow(ctx, updateFeed, arg.CollectionID, arg.ID)
 	var i Feed
 	err := row.Scan(
 		&i.ID,
@@ -182,7 +180,7 @@ func (q *Queries) UpdateFeed(ctx context.Context, arg UpdateFeedParams) (Feed, e
 
 const upsertFeed = `-- name: UpsertFeed :one
 INSERT INTO feeds(url, link, title)
-  VALUES (?1, ?2, ?3)
+  VALUES ($1, $2, $3)
 ON CONFLICT (link)
   DO UPDATE SET
     url = excluded.url, title = excluded.title
@@ -191,13 +189,13 @@ ON CONFLICT (link)
 `
 
 type UpsertFeedParams struct {
-	Url   sql.NullString
+	Url   pgtype.Text
 	Link  string
 	Title string
 }
 
 func (q *Queries) UpsertFeed(ctx context.Context, arg UpsertFeedParams) (Feed, error) {
-	row := q.db.QueryRowContext(ctx, upsertFeed, arg.Url, arg.Link, arg.Title)
+	row := q.db.QueryRow(ctx, upsertFeed, arg.Url, arg.Link, arg.Title)
 	var i Feed
 	err := row.Scan(
 		&i.ID,

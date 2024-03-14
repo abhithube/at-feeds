@@ -17,7 +17,7 @@ func NewRefreshJob(queries *database.Queries, worker *Worker) *RefreshJob {
 }
 
 func (j *RefreshJob) Run(ctx context.Context) {
-	feeds, err := j.queries.ListFeeds(ctx, database.ListFeedsParams{Limit: -1})
+	feeds, err := j.queries.ListFeeds(ctx, database.ListFeedsParams{})
 	if err != nil {
 		log.Fatal(err)
 	}

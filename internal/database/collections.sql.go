@@ -7,15 +7,17 @@ package database
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const deleteCollection = `-- name: DeleteCollection :exec
 DELETE FROM collections
-WHERE id = ?1
+WHERE id = $1
 `
 
-func (q *Queries) DeleteCollection(ctx context.Context, id int64) error {
-	_, err := q.db.ExecContext(ctx, deleteCollection, id)
+func (q *Queries) DeleteCollection(ctx context.Context, id int32) error {
+	_, err := q.db.Exec(ctx, deleteCollection, id)
 	return err
 }
 
@@ -25,11 +27,11 @@ SELECT
 FROM
   collections
 WHERE
-  id = ?1
+  id = $1
 `
 
-func (q *Queries) GetCollection(ctx context.Context, id int64) (Collection, error) {
-	row := q.db.QueryRowContext(ctx, getCollection, id)
+func (q *Queries) GetCollection(ctx context.Context, id int32) (Collection, error) {
+	row := q.db.QueryRow(ctx, getCollection, id)
 	var i Collection
 	err := row.Scan(&i.ID, &i.Title)
 	return i, err
@@ -37,13 +39,13 @@ func (q *Queries) GetCollection(ctx context.Context, id int64) (Collection, erro
 
 const insertCollection = `-- name: InsertCollection :one
 INSERT INTO collections(title)
-  VALUES (?1)
+  VALUES ($1)
 RETURNING
   id, title
 `
 
 func (q *Queries) InsertCollection(ctx context.Context, title string) (Collection, error) {
-	row := q.db.QueryRowContext(ctx, insertCollection, title)
+	row := q.db.QueryRow(ctx, insertCollection, title)
 	var i Collection
 	err := row.Scan(&i.ID, &i.Title)
 	return i, err
@@ -57,22 +59,22 @@ FROM
   collections
 ORDER BY
   title ASC
-LIMIT ?2 OFFSET ?1
+LIMIT $2 OFFSET $1
 `
 
 type ListCollectionsParams struct {
-	Offset int64
-	Limit  int64
+	Offset int32
+	Limit  pgtype.Int4
 }
 
 type ListCollectionsRow struct {
-	ID         int64
+	ID         int32
 	Title      string
 	TotalCount int64
 }
 
 func (q *Queries) ListCollections(ctx context.Context, arg ListCollectionsParams) ([]ListCollectionsRow, error) {
-	rows, err := q.db.QueryContext(ctx, listCollections, arg.Offset, arg.Limit)
+	rows, err := q.db.Query(ctx, listCollections, arg.Offset, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -84,9 +86,6 @@ func (q *Queries) ListCollections(ctx context.Context, arg ListCollectionsParams
 			return nil, err
 		}
 		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err

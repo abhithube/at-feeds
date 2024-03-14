@@ -5,34 +5,34 @@
 package database
 
 import (
-	"database/sql"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Collection struct {
-	ID    int64
+	ID    int32
 	Title string
 }
 
 type Entry struct {
-	ID           int64
+	ID           int32
 	Link         string
 	Title        string
-	PublishedAt  string
-	Author       sql.NullString
-	Content      sql.NullString
-	ThumbnailUrl sql.NullString
+	PublishedAt  pgtype.Timestamptz
+	Author       pgtype.Text
+	Content      pgtype.Text
+	ThumbnailUrl pgtype.Text
 }
 
 type Feed struct {
-	ID           int64
-	Url          sql.NullString
+	ID           int32
+	Url          pgtype.Text
 	Link         string
 	Title        string
-	CollectionID sql.NullInt64
+	CollectionID pgtype.Int4
 }
 
 type FeedEntry struct {
-	FeedID  int64
-	EntryID int64
-	HasRead int64
+	FeedID  int32
+	EntryID int32
+	HasRead bool
 }

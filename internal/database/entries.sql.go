@@ -7,7 +7,8 @@ package database
 
 import (
 	"context"
-	"database/sql"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const getEntry = `-- name: GetEntry :one
@@ -16,11 +17,11 @@ SELECT
 FROM
   entries
 WHERE
-  id = ?1
+  id = $1
 `
 
-func (q *Queries) GetEntry(ctx context.Context, id int64) (Entry, error) {
-	row := q.db.QueryRowContext(ctx, getEntry, id)
+func (q *Queries) GetEntry(ctx context.Context, id int32) (Entry, error) {
+	row := q.db.QueryRow(ctx, getEntry, id)
 	var i Entry
 	err := row.Scan(
 		&i.ID,
@@ -36,7 +37,7 @@ func (q *Queries) GetEntry(ctx context.Context, id int64) (Entry, error) {
 
 const upsertEntry = `-- name: UpsertEntry :one
 INSERT INTO entries(link, title, published_at, author, content, thumbnail_url)
-  VALUES (?1, ?2, ?3, ?4, ?5, ?6)
+  VALUES ($1, $2, $3, $4, $5, $6)
 ON CONFLICT (link)
   DO UPDATE SET
     title = excluded.title, published_at = excluded.published_at, author = excluded.author, content = excluded.content, thumbnail_url = excluded.thumbnail_url
@@ -47,14 +48,14 @@ ON CONFLICT (link)
 type UpsertEntryParams struct {
 	Link         string
 	Title        string
-	PublishedAt  string
-	Author       sql.NullString
-	Content      sql.NullString
-	ThumbnailUrl sql.NullString
+	PublishedAt  pgtype.Timestamptz
+	Author       pgtype.Text
+	Content      pgtype.Text
+	ThumbnailUrl pgtype.Text
 }
 
 func (q *Queries) UpsertEntry(ctx context.Context, arg UpsertEntryParams) (Entry, error) {
-	row := q.db.QueryRowContext(ctx, upsertEntry,
+	row := q.db.QueryRow(ctx, upsertEntry,
 		arg.Link,
 		arg.Title,
 		arg.PublishedAt,

@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
@@ -17,8 +16,8 @@ import (
 	"github.com/abhithube/at-feeds/migrations"
 	"github.com/abhithube/at-feeds/plugins"
 	"github.com/hashicorp/go-retryablehttp"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/robfig/cron/v3"
-	_ "modernc.org/sqlite"
 )
 
 func main() {
@@ -40,21 +39,23 @@ func main() {
 	}
 	frontendURL := os.Getenv("FRONTEND_URL")
 
-	db, err := sql.Open("sqlite", databaseURL)
+	pool, err := pgxpool.New(context.Background(), databaseURL)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	if err = migrations.Migrate(db); err != nil {
+	defer pool.Close()
+
+	if err = migrations.Migrate(pool); err != nil {
 		log.Fatal(err)
 	}
 
-	queries := database.New(db)
+	queries := database.New(pool)
 
 	retryClient := retryablehttp.NewClient()
 	httpClient := retryClient.StandardClient()
 
-	manager := task.NewManager(db, queries, httpClient)
+	manager := task.NewManager(pool, queries, httpClient)
 	worker := task.NewWorker(manager)
 	plugins.Register()
 
@@ -62,7 +63,7 @@ func main() {
 
 	router := http.NewServeMux()
 
-	si := api.NewStrictHandler(handler.New(db, queries, worker, backupManager), nil)
+	si := api.NewStrictHandler(handler.New(pool, queries, worker, backupManager), nil)
 
 	handler := api.HandlerFromMuxWithBaseURL(si, router, "/api")
 

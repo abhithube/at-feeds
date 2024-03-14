@@ -6,7 +6,7 @@ FROM
   collections
 ORDER BY
   title ASC
-LIMIT sqlc.arg('limit') OFFSET sqlc.arg('offset');
+LIMIT sqlc.narg('limit') OFFSET sqlc.arg('offset');
 
 -- name: GetCollection :one
 SELECT

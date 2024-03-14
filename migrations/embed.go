@@ -1,25 +1,27 @@
 package migrations
 
 import (
-	"database/sql"
 	"embed"
 	"errors"
 
 	"github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/database/sqlite"
+	"github.com/golang-migrate/migrate/v4/database/pgx/v5"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/pgx/v5/stdlib"
 )
 
-//go:embed sqlite/*
+//go:embed postgresql/*
 var fs embed.FS
 
-func Migrate(db *sql.DB) error {
-	sourceInstance, err := iofs.New(fs, "sqlite")
+func Migrate(pool *pgxpool.Pool) error {
+	sourceInstance, err := iofs.New(fs, "postgresql")
 	if err != nil {
 		return err
 	}
 
-	databaseInstance, err := sqlite.WithInstance(db, &sqlite.Config{})
+	db := stdlib.OpenDBFromPool(pool)
+	databaseInstance, err := pgx.WithInstance(db, &pgx.Config{})
 	if err != nil {
 		return err
 	}

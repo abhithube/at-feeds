@@ -24,7 +24,7 @@ WHERE
   END
 ORDER BY
   title ASC
-LIMIT sqlc.arg('limit') OFFSET sqlc.arg('offset');
+LIMIT sqlc.narg('limit') OFFSET sqlc.arg('offset');
 
 -- name: GetFeed :one
 SELECT

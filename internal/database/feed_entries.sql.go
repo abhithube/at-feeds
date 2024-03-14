@@ -7,45 +7,9 @@ package database
 
 import (
 	"context"
-	"database/sql"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
-
-const countFeedEntries = `-- name: CountFeedEntries :one
-SELECT
-  COUNT(*) AS count
-FROM
-  feed_entries
-WHERE
-  CASE WHEN ?1 THEN
-    feed_id = ?2
-  ELSE
-    TRUE
-  END
-  AND CASE WHEN ?3 THEN
-    has_read = ?4
-  ELSE
-    TRUE
-  END
-`
-
-type CountFeedEntriesParams struct {
-	FilterByFeedID  interface{}
-	FeedID          int64
-	FilterByHasRead interface{}
-	HasRead         int64
-}
-
-func (q *Queries) CountFeedEntries(ctx context.Context, arg CountFeedEntriesParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countFeedEntries,
-		arg.FilterByFeedID,
-		arg.FeedID,
-		arg.FilterByHasRead,
-		arg.HasRead,
-	)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
-}
 
 const getFeedEntry = `-- name: GetFeedEntry :one
 SELECT
@@ -53,17 +17,17 @@ SELECT
 FROM
   feed_entries
 WHERE
-  feed_id = ?1
-  AND entry_id = ?2
+  feed_id = $1
+  AND entry_id = $2
 `
 
 type GetFeedEntryParams struct {
-	FeedID  int64
-	EntryID int64
+	FeedID  int32
+	EntryID int32
 }
 
 func (q *Queries) GetFeedEntry(ctx context.Context, arg GetFeedEntryParams) (FeedEntry, error) {
-	row := q.db.QueryRowContext(ctx, getFeedEntry, arg.FeedID, arg.EntryID)
+	row := q.db.QueryRow(ctx, getFeedEntry, arg.FeedID, arg.EntryID)
 	var i FeedEntry
 	err := row.Scan(&i.FeedID, &i.EntryID, &i.HasRead)
 	return i, err
@@ -77,46 +41,46 @@ FROM
   feed_entries fe
   JOIN entries e ON e.id = fe.entry_id
 WHERE
-  CASE WHEN ?1 THEN
-    fe.feed_id = ?2
+  CASE WHEN $1 THEN
+    fe.feed_id = $2
   ELSE
     TRUE
   END
-  AND CASE WHEN ?3 THEN
-    fe.has_read = ?4
+  AND CASE WHEN $3 THEN
+    fe.has_read = $4
   ELSE
     TRUE
   END
 ORDER BY
   e.published_at DESC
-LIMIT ?6 OFFSET ?5
+LIMIT $6 OFFSET $5
 `
 
 type ListFeedEntriesParams struct {
 	FilterByFeedID  interface{}
-	FeedID          int64
+	FeedID          int32
 	FilterByHasRead interface{}
-	HasRead         int64
-	Offset          int64
-	Limit           int64
+	HasRead         bool
+	Offset          int32
+	Limit           pgtype.Int4
 }
 
 type ListFeedEntriesRow struct {
-	FeedID       int64
-	EntryID      int64
-	HasRead      int64
-	ID           int64
+	FeedID       int32
+	EntryID      int32
+	HasRead      bool
+	ID           int32
 	Link         string
 	Title        string
-	PublishedAt  string
-	Author       sql.NullString
-	Content      sql.NullString
-	ThumbnailUrl sql.NullString
+	PublishedAt  pgtype.Timestamptz
+	Author       pgtype.Text
+	Content      pgtype.Text
+	ThumbnailUrl pgtype.Text
 	TotalCount   int64
 }
 
 func (q *Queries) ListFeedEntries(ctx context.Context, arg ListFeedEntriesParams) ([]ListFeedEntriesRow, error) {
-	rows, err := q.db.QueryContext(ctx, listFeedEntries,
+	rows, err := q.db.Query(ctx, listFeedEntries,
 		arg.FilterByFeedID,
 		arg.FeedID,
 		arg.FilterByHasRead,
@@ -148,9 +112,6 @@ func (q *Queries) ListFeedEntries(ctx context.Context, arg ListFeedEntriesParams
 		}
 		items = append(items, i)
 	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
@@ -161,22 +122,22 @@ const updateFeedEntry = `-- name: UpdateFeedEntry :one
 UPDATE
   feed_entries
 SET
-  has_read = coalesce(?1, has_read)
+  has_read = coalesce($1, has_read)
 WHERE
-  feed_id = ?2
-  AND entry_id = ?3
+  feed_id = $2
+  AND entry_id = $3
 RETURNING
   feed_id, entry_id, has_read
 `
 
 type UpdateFeedEntryParams struct {
-	HasRead sql.NullInt64
-	FeedID  int64
-	EntryID int64
+	HasRead pgtype.Bool
+	FeedID  int32
+	EntryID int32
 }
 
 func (q *Queries) UpdateFeedEntry(ctx context.Context, arg UpdateFeedEntryParams) (FeedEntry, error) {
-	row := q.db.QueryRowContext(ctx, updateFeedEntry, arg.HasRead, arg.FeedID, arg.EntryID)
+	row := q.db.QueryRow(ctx, updateFeedEntry, arg.HasRead, arg.FeedID, arg.EntryID)
 	var i FeedEntry
 	err := row.Scan(&i.FeedID, &i.EntryID, &i.HasRead)
 	return i, err
@@ -184,17 +145,17 @@ func (q *Queries) UpdateFeedEntry(ctx context.Context, arg UpdateFeedEntryParams
 
 const upsertFeedEntry = `-- name: UpsertFeedEntry :exec
 INSERT INTO feed_entries(entry_id, feed_id)
-  VALUES (?1, ?2)
+  VALUES ($1, $2)
 ON CONFLICT (feed_id, entry_id)
   DO NOTHING
 `
 
 type UpsertFeedEntryParams struct {
-	EntryID int64
-	FeedID  int64
+	EntryID int32
+	FeedID  int32
 }
 
 func (q *Queries) UpsertFeedEntry(ctx context.Context, arg UpsertFeedEntryParams) error {
-	_, err := q.db.ExecContext(ctx, upsertFeedEntry, arg.EntryID, arg.FeedID)
+	_, err := q.db.Exec(ctx, upsertFeedEntry, arg.EntryID, arg.FeedID)
 	return err
 }

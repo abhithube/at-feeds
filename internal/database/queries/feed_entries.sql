@@ -18,24 +18,7 @@ WHERE
   END
 ORDER BY
   e.published_at DESC
-LIMIT sqlc.arg('limit') OFFSET sqlc.arg('offset');
-
--- name: CountFeedEntries :one
-SELECT
-  COUNT(*) AS count
-FROM
-  feed_entries
-WHERE
-  CASE WHEN sqlc.arg('filter_by_feed_id') THEN
-    feed_id = sqlc.arg('feed_id')
-  ELSE
-    TRUE
-  END
-  AND CASE WHEN sqlc.arg('filter_by_has_read') THEN
-    has_read = sqlc.arg('has_read')
-  ELSE
-    TRUE
-  END;
+LIMIT sqlc.narg('limit') OFFSET sqlc.arg('offset');
 
 -- name: GetFeedEntry :one
 SELECT

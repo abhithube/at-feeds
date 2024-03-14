@@ -16,11 +16,12 @@ func (h *Handler) ListFeeds(ctx context.Context, request api.ListFeedsRequestObj
 	limit := request.Params.Limit
 	page := request.Params.Page
 
-	params := database.ListFeedsParams{Limit: -1}
-	if limit != nil {
-		params.Limit = int64(*limit)
+	params := database.ListFeedsParams{}
+	if limit != nil && *limit >= 0 {
+		params.Limit.Int32 = int32(*limit)
+		params.Limit.Valid = true
 		if page != nil {
-			params.Offset = (int64(*page) - 1) * params.Limit
+			params.Offset = (int32(*page) - 1) * params.Limit.Int32
 		}
 	}
 	if collectionID != nil {
@@ -50,7 +51,7 @@ func (h *Handler) ListFeeds(ctx context.Context, request api.ListFeedsRequestObj
 
 	var hasMore bool
 	if len(result) > 0 {
-		hasMore = (params.Offset + params.Limit) < result[0].TotalCount
+		hasMore = int64(params.Offset+params.Limit.Int32) < result[0].TotalCount
 	}
 	response := api.ListFeeds200JSONResponse{
 		Data:    arr,
@@ -61,7 +62,7 @@ func (h *Handler) ListFeeds(ctx context.Context, request api.ListFeedsRequestObj
 }
 
 func (h *Handler) GetFeed(ctx context.Context, request api.GetFeedRequestObject) (api.GetFeedResponseObject, error) {
-	result, err := h.queries.GetFeed(ctx, int64(request.Id))
+	result, err := h.queries.GetFeed(ctx, int32(request.Id))
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return api.GetFeed404JSONResponse{Message: "Feed not found"}, nil
@@ -107,10 +108,11 @@ func (h *Handler) UpdateFeed(ctx context.Context, request api.UpdateFeedRequestO
 	collectionID := request.Body.CollectionId
 
 	params := database.UpdateFeedParams{
-		ID: int64(request.Id),
+		ID: int32(request.Id),
 	}
 	if collectionID != nil {
-		params.CollectionID = sql.NullInt64{Int64: int64(*collectionID), Valid: true}
+		params.CollectionID.Int32 = int32(*collectionID)
+		params.CollectionID.Valid = true
 	}
 
 	result, err := h.queries.UpdateFeed(ctx, params)
@@ -135,7 +137,7 @@ func (h *Handler) UpdateFeed(ctx context.Context, request api.UpdateFeedRequestO
 }
 
 func (h *Handler) DeleteFeed(ctx context.Context, request api.DeleteFeedRequestObject) (api.DeleteFeedResponseObject, error) {
-	err := h.queries.DeleteFeed(ctx, int64(request.Id))
+	err := h.queries.DeleteFeed(ctx, int32(request.Id))
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return api.DeleteFeed404JSONResponse{Message: "Feed not found"}, nil
@@ -162,7 +164,7 @@ func (h *Handler) ImportFeeds(ctx context.Context, request api.ImportFeedsReques
 		return handleError(err), nil
 	}
 
-	result, err := h.queries.ListFeeds(ctx, database.ListFeedsParams{Limit: -1})
+	result, err := h.queries.ListFeeds(ctx, database.ListFeedsParams{})
 	if err != nil {
 		return handleError(err), nil
 	}
@@ -190,7 +192,7 @@ func (h *Handler) ImportFeeds(ctx context.Context, request api.ImportFeedsReques
 }
 
 func (h *Handler) ExportFeeds(ctx context.Context, _ api.ExportFeedsRequestObject) (api.ExportFeedsResponseObject, error) {
-	result, err := h.queries.ListFeeds(ctx, database.ListFeedsParams{Limit: -1})
+	result, err := h.queries.ListFeeds(ctx, database.ListFeedsParams{})
 	if err != nil {
 		return api.ExportFeeds500JSONResponse{Message: err.Error()}, nil
 	}

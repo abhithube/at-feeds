@@ -14,11 +14,12 @@ func (h *Handler) ListCollections(ctx context.Context, request api.ListCollectio
 	limit := request.Params.Limit
 	page := request.Params.Page
 
-	params := database.ListCollectionsParams{Limit: -1}
-	if limit != nil {
-		params.Limit = int64(*limit)
+	params := database.ListCollectionsParams{}
+	if limit != nil && *limit >= 0 {
+		params.Limit.Int32 = int32(*limit)
+		params.Limit.Valid = true
 		if page != nil {
-			params.Offset = (int64(*page) - 1) * params.Limit
+			params.Offset = (int32(*page) - 1) * params.Limit.Int32
 		}
 	}
 
@@ -39,7 +40,7 @@ func (h *Handler) ListCollections(ctx context.Context, request api.ListCollectio
 
 	var hasMore bool
 	if len(result) > 0 {
-		hasMore = (params.Offset + params.Limit) < result[0].TotalCount
+		hasMore = int64(params.Offset+params.Limit.Int32) < result[0].TotalCount
 	}
 	response := api.ListCollections200JSONResponse{
 		Data:    arr,
