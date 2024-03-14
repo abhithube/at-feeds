@@ -17,8 +17,8 @@ import (
 	"github.com/abhithube/at-feeds/migrations"
 	"github.com/abhithube/at-feeds/plugins"
 	"github.com/hashicorp/go-retryablehttp"
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/robfig/cron/v3"
+	_ "modernc.org/sqlite"
 )
 
 func main() {
@@ -40,7 +40,7 @@ func main() {
 	}
 	frontendURL := os.Getenv("FRONTEND_URL")
 
-	db, err := sql.Open("sqlite3", databaseURL)
+	db, err := sql.Open("sqlite", databaseURL)
 	if err != nil {
 		log.Fatal(err)
 	}
