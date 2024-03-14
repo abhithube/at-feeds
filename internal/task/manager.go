@@ -3,7 +3,6 @@ package task
 import (
 	"bytes"
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"io"
@@ -12,18 +11,20 @@ import (
 
 	"github.com/abhithube/at-feeds/internal/database"
 	"github.com/abhithube/at-feeds/internal/parser"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"golang.org/x/net/html"
 )
 
 type Manager struct {
-	db         *sql.DB
+	pool       *pgxpool.Pool
 	queries    *database.Queries
 	httpClient *http.Client
 }
 
-func NewManager(db *sql.DB, queries *database.Queries, httpClient *http.Client) *Manager {
+func NewManager(pool *pgxpool.Pool, queries *database.Queries, httpClient *http.Client) *Manager {
 	return &Manager{
-		db:         db,
+		pool:       pool,
 		httpClient: httpClient,
 		queries:    queries,
 	}
@@ -106,53 +107,40 @@ func (m *Manager) Postprocess(_ context.Context, feed *parser.Feed) error {
 }
 
 func (m *Manager) Save(ctx context.Context, feed *parser.Feed) (*database.Feed, error) {
-	tx, err := m.db.BeginTx(ctx, nil)
+	tx, err := m.pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		return nil, err
 	}
 
-	defer database.Rollback(tx)
+	defer database.Rollback(ctx, tx)
 
 	qtx := m.queries.WithTx(tx)
 
-	var url sql.NullString
-	if feed.URL != "" {
-		url = sql.NullString{String: feed.URL, Valid: true}
-	}
-
 	params := database.UpsertFeedParams{
-		Url:   url,
 		Link:  feed.Link,
 		Title: feed.Title,
 	}
+	params.Url.String = feed.URL
+	params.Url.Valid = feed.URL != ""
+
 	inserted, err := qtx.UpsertFeed(ctx, params)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, entry := range feed.Entries {
-		var author, content, thumbnailURL sql.NullString
-		if entry.Author != "" {
-			author = sql.NullString{String: entry.Author, Valid: true}
-		}
-		if entry.Content != "" {
-			content = sql.NullString{String: entry.Content, Valid: true}
-		}
-		if entry.ThumbnailURL != "" {
-			thumbnailURL = sql.NullString{String: entry.ThumbnailURL, Valid: true}
-		}
-		publishedAt, err := entry.PublishedAt.MarshalText()
-		if err != nil {
-			return nil, err
-		}
 		params := database.UpsertEntryParams{
-			Link:         entry.Link,
-			Title:        entry.Title,
-			PublishedAt:  string(publishedAt),
-			Author:       author,
-			Content:      content,
-			ThumbnailUrl: thumbnailURL,
+			Link:  entry.Link,
+			Title: entry.Title,
 		}
+		params.ThumbnailUrl.String = entry.ThumbnailURL
+		params.ThumbnailUrl.Valid = entry.ThumbnailURL != ""
+		params.PublishedAt.Time = entry.PublishedAt
+		params.PublishedAt.Valid = true
+		params.Content.String = entry.Content
+		params.Content.Valid = entry.Content != ""
+		params.Author.String = entry.Author
+		params.Author.Valid = entry.Author != ""
 
 		insertedEntry, err := qtx.UpsertEntry(ctx, params)
 		if err != nil {
@@ -160,8 +148,8 @@ func (m *Manager) Save(ctx context.Context, feed *parser.Feed) (*database.Feed, 
 		}
 
 		params2 := database.UpsertFeedEntryParams{
-			EntryID: insertedEntry.ID,
-			FeedID:  inserted.ID,
+			EntryID: int32(insertedEntry.ID),
+			FeedID:  int32(inserted.ID),
 		}
 
 		if err = qtx.UpsertFeedEntry(ctx, params2); err != nil {
@@ -169,5 +157,5 @@ func (m *Manager) Save(ctx context.Context, feed *parser.Feed) (*database.Feed, 
 		}
 	}
 
-	return &inserted, tx.Commit()
+	return &inserted, tx.Commit(ctx)
 }
