@@ -15,7 +15,5 @@ COPY --from=react-build /app/dist ./web/dist
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags '-s -w' ./cmd/server
 
 FROM gcr.io/distroless/static AS release
-ENV DATABASE_URL=/data/db.sqlite3
-VOLUME ["/data"]
 COPY --from=go-build /app/server /usr/local/bin/at-feeds
 ENTRYPOINT ["at-feeds"]
