@@ -12,15 +12,6 @@ import (
 )
 
 func (h *Handler) ListFeeds(ctx context.Context, request api.ListFeedsRequestObject) (api.ListFeedsResponseObject, error) {
-	tx, err := h.db.BeginTx(ctx, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	defer database.Rollback(tx)
-
-	qtx := h.queries.WithTx(tx)
-
 	collectionID := request.Params.CollectionId
 	limit := request.Params.Limit
 	page := request.Params.Page
@@ -37,16 +28,7 @@ func (h *Handler) ListFeeds(ctx context.Context, request api.ListFeedsRequestObj
 		params.CollectionID = collectionID
 	}
 
-	result, err := qtx.ListFeeds(ctx, params)
-	if err != nil {
-		return nil, err
-	}
-
-	params2 := database.CountFeedsParams{
-		FilterByCollectionID: params.FilterByCollectionID,
-		CollectionID:         params.CollectionID,
-	}
-	count, err := qtx.CountFeeds(ctx, params2)
+	result, err := h.queries.ListFeeds(ctx, params)
 	if err != nil {
 		return nil, err
 	}
@@ -66,12 +48,16 @@ func (h *Handler) ListFeeds(ctx context.Context, request api.ListFeedsRequestObj
 		arr[i] = feed
 	}
 
+	var hasMore bool
+	if len(result) > 0 {
+		hasMore = (params.Offset + params.Limit) < result[0].TotalCount
+	}
 	response := api.ListFeeds200JSONResponse{
 		Data:    arr,
-		HasMore: (params.Limit + params.Offset) < count,
+		HasMore: hasMore,
 	}
 
-	return response, tx.Commit()
+	return response, nil
 }
 
 func (h *Handler) GetFeed(ctx context.Context, request api.GetFeedRequestObject) (api.GetFeedResponseObject, error) {
@@ -118,15 +104,6 @@ func (h *Handler) CreateFeed(ctx context.Context, request api.CreateFeedRequestO
 }
 
 func (h *Handler) UpdateFeed(ctx context.Context, request api.UpdateFeedRequestObject) (api.UpdateFeedResponseObject, error) {
-	tx, err := h.db.BeginTx(ctx, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	defer database.Rollback(tx)
-
-	qtx := h.queries.WithTx(tx)
-
 	collectionID := request.Body.CollectionId
 
 	params := database.UpdateFeedParams{
@@ -136,7 +113,7 @@ func (h *Handler) UpdateFeed(ctx context.Context, request api.UpdateFeedRequestO
 		params.CollectionID = sql.NullInt64{Int64: int64(*collectionID), Valid: true}
 	}
 
-	_, err = qtx.UpdateFeed(ctx, params)
+	result, err := h.queries.UpdateFeed(ctx, params)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return api.UpdateFeed404JSONResponse{Message: "Feed not found"}, nil
@@ -145,24 +122,16 @@ func (h *Handler) UpdateFeed(ctx context.Context, request api.UpdateFeedRequestO
 		return nil, err
 	}
 
-	result, err := qtx.GetFeed(ctx, int64(request.Id))
-	if err != nil {
-		return nil, err
-	}
-
-	entryCount := int(result.Entrycount)
 	response := api.UpdateFeed200JSONResponse{
-		Id:          int(result.ID),
-		Link:        result.Link,
-		Title:       result.Title,
-		EntryCount:  &entryCount,
-		UnreadCount: int(result.Unreadcount),
+		Id:    int(result.ID),
+		Link:  result.Link,
+		Title: result.Title,
 	}
 	if result.Url.Valid {
 		response.Url = &result.Url.String
 	}
 
-	return response, tx.Commit()
+	return response, nil
 }
 
 func (h *Handler) DeleteFeed(ctx context.Context, request api.DeleteFeedRequestObject) (api.DeleteFeedResponseObject, error) {

@@ -10,15 +10,6 @@ import (
 )
 
 func (h *Handler) ListFeedEntries(ctx context.Context, request api.ListFeedEntriesRequestObject) (api.ListFeedEntriesResponseObject, error) {
-	tx, err := h.db.BeginTx(ctx, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	defer database.Rollback(tx)
-
-	qtx := h.queries.WithTx(tx)
-
 	feedID := request.Params.FeedId
 	hasRead := request.Params.HasRead
 	limit := request.Params.Limit
@@ -44,19 +35,7 @@ func (h *Handler) ListFeedEntries(ctx context.Context, request api.ListFeedEntri
 		}
 	}
 
-	result, err := qtx.ListFeedEntries(ctx, params)
-	if err != nil {
-		return nil, err
-	}
-
-	params2 := database.CountFeedEntriesParams{
-		FilterByFeedID:  params.FilterByFeedID,
-		FeedID:          params.FeedID,
-		FilterByHasRead: params.FilterByHasRead,
-		HasRead:         params.HasRead,
-	}
-
-	count, err := qtx.CountFeedEntries(ctx, params2)
+	result, err := h.queries.ListFeedEntries(ctx, params)
 	if err != nil {
 		return nil, err
 	}
@@ -89,24 +68,19 @@ func (h *Handler) ListFeedEntries(ctx context.Context, request api.ListFeedEntri
 		data[i] = entry
 	}
 
+	var hasMore bool
+	if len(result) > 0 {
+		hasMore = (params.Limit + params.Offset) < result[0].TotalCount
+	}
 	response := api.ListFeedEntries200JSONResponse{
 		Data:    data,
-		HasMore: (params.Limit + params.Offset) < count,
+		HasMore: hasMore,
 	}
 
-	return response, tx.Commit()
+	return response, nil
 }
 
 func (h *Handler) UpdateFeedEntry(ctx context.Context, request api.UpdateFeedEntryRequestObject) (api.UpdateFeedEntryResponseObject, error) {
-	tx, err := h.db.BeginTx(ctx, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	defer database.Rollback(tx)
-
-	qtx := h.queries.WithTx(tx)
-
 	hasRead := request.Body.HasRead
 
 	var hasReadInt int64
@@ -119,7 +93,7 @@ func (h *Handler) UpdateFeedEntry(ctx context.Context, request api.UpdateFeedEnt
 		HasRead: sql.NullInt64{Int64: hasReadInt, Valid: hasRead != nil},
 	}
 
-	result, err := qtx.UpdateFeedEntry(ctx, params2)
+	result, err := h.queries.UpdateFeedEntry(ctx, params2)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return api.UpdateFeedEntry404JSONResponse{Message: "Entry not found"}, nil
@@ -128,7 +102,7 @@ func (h *Handler) UpdateFeedEntry(ctx context.Context, request api.UpdateFeedEnt
 		return nil, err
 	}
 
-	entryResult, err := qtx.GetEntry(ctx, result.EntryID)
+	entryResult, err := h.queries.GetEntry(ctx, result.EntryID)
 	if err != nil {
 		return nil, err
 	}
@@ -156,5 +130,5 @@ func (h *Handler) UpdateFeedEntry(ctx context.Context, request api.UpdateFeedEnt
 		res.ThumbnailUrl = &entryResult.ThumbnailUrl.String
 	}
 
-	return res, tx.Commit()
+	return res, nil
 }

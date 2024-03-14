@@ -1,6 +1,7 @@
 -- name: ListCollections :many
 SELECT
-  *
+  *,
+  count(*) OVER () AS total_count
 FROM
   collections
 WHERE
@@ -16,22 +17,6 @@ WHERE
 ORDER BY
   title ASC
 LIMIT sqlc.arg('limit') OFFSET sqlc.arg('offset');
-
--- name: CountCollections :one
-SELECT
-  COUNT(*) AS count
-FROM
-  collections
-WHERE
-  CASE WHEN sqlc.arg('filter_by_parent_id') THEN
-    CASE WHEN sqlc.arg('parent_id') < 0 THEN
-      parent_id IS NULL
-    ELSE
-      parent_id = sqlc.arg('parent_id')
-    END
-  ELSE
-    TRUE
-  END;
 
 -- name: GetCollection :one
 SELECT

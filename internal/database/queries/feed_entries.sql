@@ -1,6 +1,7 @@
 -- name: ListFeedEntries :many
 SELECT
-  *
+  *,
+  count(*) OVER () AS total_count
 FROM
   feed_entries fe
   JOIN entries e ON e.id = fe.entry_id

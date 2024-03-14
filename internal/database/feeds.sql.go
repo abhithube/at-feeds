@@ -10,35 +10,6 @@ import (
 	"database/sql"
 )
 
-const countFeeds = `-- name: CountFeeds :one
-SELECT
-  COUNT(*) AS count
-FROM
-  feeds
-WHERE
-  CASE WHEN ?1 THEN
-    CASE WHEN ?2 < 0 THEN
-      collection_id IS NULL
-    ELSE
-      collection_id = ?2
-    END
-  ELSE
-    TRUE
-  END
-`
-
-type CountFeedsParams struct {
-	FilterByCollectionID interface{}
-	CollectionID         interface{}
-}
-
-func (q *Queries) CountFeeds(ctx context.Context, arg CountFeedsParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countFeeds, arg.FilterByCollectionID, arg.CollectionID)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
-}
-
 const deleteFeed = `-- name: DeleteFeed :exec
 DELETE FROM feeds
 WHERE id = ?1
@@ -101,6 +72,7 @@ func (q *Queries) GetFeed(ctx context.Context, id int64) (GetFeedRow, error) {
 const listFeeds = `-- name: ListFeeds :many
 SELECT
   id, url, link, title, collection_id,
+  count(*) OVER () AS total_count,
 (
     SELECT
       count(*)
@@ -139,6 +111,7 @@ type ListFeedsRow struct {
 	Link         string
 	Title        string
 	CollectionID sql.NullInt64
+	TotalCount   int64
 	Unreadcount  int64
 }
 
@@ -162,6 +135,7 @@ func (q *Queries) ListFeeds(ctx context.Context, arg ListFeedsParams) ([]ListFee
 			&i.Link,
 			&i.Title,
 			&i.CollectionID,
+			&i.TotalCount,
 			&i.Unreadcount,
 		); err != nil {
 			return nil, err

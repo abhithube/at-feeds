@@ -71,7 +71,8 @@ func (q *Queries) GetFeedEntry(ctx context.Context, arg GetFeedEntryParams) (Fee
 
 const listFeedEntries = `-- name: ListFeedEntries :many
 SELECT
-  feed_id, entry_id, has_read, id, link, title, published_at, author, content, thumbnail_url
+  feed_id, entry_id, has_read, id, link, title, published_at, author, content, thumbnail_url,
+  count(*) OVER () AS total_count
 FROM
   feed_entries fe
   JOIN entries e ON e.id = fe.entry_id
@@ -111,6 +112,7 @@ type ListFeedEntriesRow struct {
 	Author       sql.NullString
 	Content      sql.NullString
 	ThumbnailUrl sql.NullString
+	TotalCount   int64
 }
 
 func (q *Queries) ListFeedEntries(ctx context.Context, arg ListFeedEntriesParams) ([]ListFeedEntriesRow, error) {
@@ -140,6 +142,7 @@ func (q *Queries) ListFeedEntries(ctx context.Context, arg ListFeedEntriesParams
 			&i.Author,
 			&i.Content,
 			&i.ThumbnailUrl,
+			&i.TotalCount,
 		); err != nil {
 			return nil, err
 		}

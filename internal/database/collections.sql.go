@@ -10,35 +10,6 @@ import (
 	"database/sql"
 )
 
-const countCollections = `-- name: CountCollections :one
-SELECT
-  COUNT(*) AS count
-FROM
-  collections
-WHERE
-  CASE WHEN ?1 THEN
-    CASE WHEN ?2 < 0 THEN
-      parent_id IS NULL
-    ELSE
-      parent_id = ?2
-    END
-  ELSE
-    TRUE
-  END
-`
-
-type CountCollectionsParams struct {
-	FilterByParentID interface{}
-	ParentID         interface{}
-}
-
-func (q *Queries) CountCollections(ctx context.Context, arg CountCollectionsParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countCollections, arg.FilterByParentID, arg.ParentID)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
-}
-
 const deleteCollection = `-- name: DeleteCollection :exec
 DELETE FROM collections
 WHERE id = ?1
@@ -88,7 +59,8 @@ func (q *Queries) InsertCollection(ctx context.Context, arg InsertCollectionPara
 
 const listCollections = `-- name: ListCollections :many
 SELECT
-  id, title, parent_id
+  id, title, parent_id,
+  count(*) OVER () AS total_count
 FROM
   collections
 WHERE
@@ -113,7 +85,14 @@ type ListCollectionsParams struct {
 	Limit            int64
 }
 
-func (q *Queries) ListCollections(ctx context.Context, arg ListCollectionsParams) ([]Collection, error) {
+type ListCollectionsRow struct {
+	ID         int64
+	Title      string
+	ParentID   sql.NullInt64
+	TotalCount int64
+}
+
+func (q *Queries) ListCollections(ctx context.Context, arg ListCollectionsParams) ([]ListCollectionsRow, error) {
 	rows, err := q.db.QueryContext(ctx, listCollections,
 		arg.FilterByParentID,
 		arg.ParentID,
@@ -124,10 +103,15 @@ func (q *Queries) ListCollections(ctx context.Context, arg ListCollectionsParams
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Collection
+	var items []ListCollectionsRow
 	for rows.Next() {
-		var i Collection
-		if err := rows.Scan(&i.ID, &i.Title, &i.ParentID); err != nil {
+		var i ListCollectionsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Title,
+			&i.ParentID,
+			&i.TotalCount,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

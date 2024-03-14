@@ -1,6 +1,7 @@
 -- name: ListFeeds :many
 SELECT
   *,
+  count(*) OVER () AS total_count,
 (
     SELECT
       count(*)
@@ -24,22 +25,6 @@ WHERE
 ORDER BY
   title ASC
 LIMIT sqlc.arg('limit') OFFSET sqlc.arg('offset');
-
--- name: CountFeeds :one
-SELECT
-  COUNT(*) AS count
-FROM
-  feeds
-WHERE
-  CASE WHEN sqlc.arg('filter_by_collection_id') THEN
-    CASE WHEN sqlc.arg('collection_id') < 0 THEN
-      collection_id IS NULL
-    ELSE
-      collection_id = sqlc.arg('collection_id')
-    END
-  ELSE
-    TRUE
-  END;
 
 -- name: GetFeed :one
 SELECT

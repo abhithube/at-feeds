@@ -11,15 +11,6 @@ import (
 )
 
 func (h *Handler) ListCollections(ctx context.Context, request api.ListCollectionsRequestObject) (api.ListCollectionsResponseObject, error) {
-	tx, err := h.db.BeginTx(ctx, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	defer database.Rollback(tx)
-
-	qtx := h.queries.WithTx(tx)
-
 	parentID := request.Params.ParentId
 	limit := request.Params.Limit
 	page := request.Params.Page
@@ -36,16 +27,7 @@ func (h *Handler) ListCollections(ctx context.Context, request api.ListCollectio
 		params.ParentID = parentID
 	}
 
-	result, err := qtx.ListCollections(ctx, params)
-	if err != nil {
-		return nil, err
-	}
-
-	params2 := database.CountCollectionsParams{
-		FilterByParentID: params.FilterByParentID,
-		ParentID:         params.ParentID,
-	}
-	count, err := qtx.CountCollections(ctx, params2)
+	result, err := h.queries.ListCollections(ctx, params)
 	if err != nil {
 		return nil, err
 	}
@@ -60,12 +42,16 @@ func (h *Handler) ListCollections(ctx context.Context, request api.ListCollectio
 		arr[i] = collection
 	}
 
+	var hasMore bool
+	if len(result) > 0 {
+		hasMore = (params.Offset + params.Limit) < result[0].TotalCount
+	}
 	response := api.ListCollections200JSONResponse{
 		Data:    arr,
-		HasMore: (params.Limit + params.Offset) < count,
+		HasMore: hasMore,
 	}
 
-	return response, tx.Commit()
+	return response, nil
 }
 
 func (h *Handler) CreateCollection(ctx context.Context, request api.CreateCollectionRequestObject) (api.CreateCollectionResponseObject, error) {
@@ -76,27 +62,18 @@ func (h *Handler) CreateCollection(ctx context.Context, request api.CreateCollec
 		return api.CreateCollection400JSONResponse{Message: "'title' cannot be empty"}, nil
 	}
 
-	tx, err := h.db.BeginTx(ctx, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	defer database.Rollback(tx)
-
-	qtx := h.queries.WithTx(tx)
-
 	params := database.InsertCollectionParams{
 		Title: title,
 	}
 	if parentID != nil {
 		params.ParentID = sql.NullInt64{Int64: int64(*parentID), Valid: true}
 
-		_, err := qtx.GetCollection(ctx, int64(*parentID))
+		_, err := h.queries.GetCollection(ctx, int64(*parentID))
 		if err != nil {
 			return api.CreateCollection400JSONResponse{Message: "Invalid parent ID"}, nil
 		}
 	}
-	result, err := qtx.InsertCollection(ctx, params)
+	result, err := h.queries.InsertCollection(ctx, params)
 	if err != nil {
 		msg := err.Error()
 		if errors.Is(err, sql.ErrNoRows) {
@@ -111,5 +88,5 @@ func (h *Handler) CreateCollection(ctx context.Context, request api.CreateCollec
 		Title: result.Title,
 	}
 
-	return response, tx.Commit()
+	return response, nil
 }
