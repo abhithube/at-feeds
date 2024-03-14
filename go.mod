@@ -5,7 +5,6 @@ go 1.22.0
 require (
 	github.com/andybalholm/cascadia v1.3.2
 	github.com/gabriel-vasile/mimetype v1.4.3
-	github.com/go-chi/chi/v5 v5.0.12
 	github.com/golang-migrate/migrate/v4 v4.17.0
 	github.com/hashicorp/go-retryablehttp v0.7.5
 	github.com/mattn/go-sqlite3 v1.14.22

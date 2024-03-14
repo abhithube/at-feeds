@@ -16,7 +16,6 @@ import (
 	"github.com/abhithube/at-feeds/internal/task"
 	"github.com/abhithube/at-feeds/migrations"
 	"github.com/abhithube/at-feeds/plugins"
-	"github.com/go-chi/chi/v5"
 	"github.com/hashicorp/go-retryablehttp"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/robfig/cron/v3"
@@ -61,23 +60,21 @@ func main() {
 
 	backupManager := backup.NewOPMLManager()
 
-	router := chi.NewRouter()
-
-	if frontendURL != "" {
-		router.Use(api.CORSHandler(frontendURL))
-	}
+	router := http.NewServeMux()
 
 	si := api.NewStrictHandler(handler.New(db, queries, worker, backupManager), nil)
 
-	api.HandlerFromMuxWithBaseURL(si, router, "/api")
+	handler := api.HandlerFromMuxWithBaseURL(si, router, "/api")
 
 	if frontendURL == "" {
-		router.Get("/*", api.SPAHandler("dist"))
+		router.Handle("GET /", api.SPAHandler("dist"))
 	}
+
+	handler = api.CORSHandler(frontendURL)(handler)
 
 	httpServer := http.Server{
 		Addr:    fmt.Sprintf(":%d", port),
-		Handler: router,
+		Handler: handler,
 	}
 
 	if shouldRefresh {
