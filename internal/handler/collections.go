@@ -56,7 +56,7 @@ func (h *Handler) CreateCollection(ctx context.Context, request api.CreateCollec
 		return api.CreateCollection400JSONResponse{Message: "'title' cannot be empty"}, nil
 	}
 
-	result, err := h.queries.InsertCollection(ctx, title)
+	result, err := h.queries.CreateCollection(ctx, title)
 	if err != nil {
 		msg := err.Error()
 		if errors.Is(err, sql.ErrNoRows) {

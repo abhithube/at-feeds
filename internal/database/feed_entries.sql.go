@@ -11,6 +11,23 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const createFeedEntry = `-- name: CreateFeedEntry :exec
+INSERT INTO feed_entries(entry_id, feed_id)
+  VALUES ($1, $2)
+ON CONFLICT (feed_id, entry_id)
+  DO NOTHING
+`
+
+type CreateFeedEntryParams struct {
+	EntryID int32
+	FeedID  int32
+}
+
+func (q *Queries) CreateFeedEntry(ctx context.Context, arg CreateFeedEntryParams) error {
+	_, err := q.db.Exec(ctx, createFeedEntry, arg.EntryID, arg.FeedID)
+	return err
+}
+
 const getFeedEntry = `-- name: GetFeedEntry :one
 SELECT
   feed_id, entry_id, has_read
@@ -141,21 +158,4 @@ func (q *Queries) UpdateFeedEntry(ctx context.Context, arg UpdateFeedEntryParams
 	var i FeedEntry
 	err := row.Scan(&i.FeedID, &i.EntryID, &i.HasRead)
 	return i, err
-}
-
-const upsertFeedEntry = `-- name: UpsertFeedEntry :exec
-INSERT INTO feed_entries(entry_id, feed_id)
-  VALUES ($1, $2)
-ON CONFLICT (feed_id, entry_id)
-  DO NOTHING
-`
-
-type UpsertFeedEntryParams struct {
-	EntryID int32
-	FeedID  int32
-}
-
-func (q *Queries) UpsertFeedEntry(ctx context.Context, arg UpsertFeedEntryParams) error {
-	_, err := q.db.Exec(ctx, upsertFeedEntry, arg.EntryID, arg.FeedID)
-	return err
 }

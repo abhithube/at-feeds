@@ -16,7 +16,7 @@ FROM
 WHERE
   id = sqlc.arg('id');
 
--- name: InsertCollection :one
+-- name: CreateCollection :one
 INSERT INTO collections(title)
   VALUES (sqlc.arg('title'))
 RETURNING

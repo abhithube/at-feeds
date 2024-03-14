@@ -6,7 +6,7 @@ FROM
 WHERE
   id = sqlc.arg('id');
 
--- name: UpsertEntry :one
+-- name: CreateEntry :one
 INSERT INTO entries(link, title, published_at, author, content, thumbnail_url)
   VALUES (sqlc.arg('link'), sqlc.arg('title'), sqlc.arg('published_at'), sqlc.arg('author'), sqlc.arg('content'), sqlc.arg('thumbnail_url'))
 ON CONFLICT (link)

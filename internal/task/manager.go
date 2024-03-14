@@ -116,20 +116,20 @@ func (m *Manager) Save(ctx context.Context, feed *parser.Feed) (*database.Feed, 
 
 	qtx := m.queries.WithTx(tx)
 
-	params := database.UpsertFeedParams{
+	params := database.CreateFeedParams{
 		Link:  feed.Link,
 		Title: feed.Title,
 	}
 	params.Url.String = feed.URL
 	params.Url.Valid = feed.URL != ""
 
-	inserted, err := qtx.UpsertFeed(ctx, params)
+	inserted, err := qtx.CreateFeed(ctx, params)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, entry := range feed.Entries {
-		params := database.UpsertEntryParams{
+		params := database.CreateEntryParams{
 			Link:  entry.Link,
 			Title: entry.Title,
 		}
@@ -142,17 +142,17 @@ func (m *Manager) Save(ctx context.Context, feed *parser.Feed) (*database.Feed, 
 		params.Author.String = entry.Author
 		params.Author.Valid = entry.Author != ""
 
-		insertedEntry, err := qtx.UpsertEntry(ctx, params)
+		insertedEntry, err := qtx.CreateEntry(ctx, params)
 		if err != nil {
 			return nil, err
 		}
 
-		params2 := database.UpsertFeedEntryParams{
+		params2 := database.CreateFeedEntryParams{
 			EntryID: int32(insertedEntry.ID),
 			FeedID:  int32(inserted.ID),
 		}
 
-		if err = qtx.UpsertFeedEntry(ctx, params2); err != nil {
+		if err = qtx.CreateFeedEntry(ctx, params2); err != nil {
 			return nil, err
 		}
 	}

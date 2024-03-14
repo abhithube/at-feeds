@@ -11,6 +11,20 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const createCollection = `-- name: CreateCollection :one
+INSERT INTO collections(title)
+  VALUES ($1)
+RETURNING
+  id, title
+`
+
+func (q *Queries) CreateCollection(ctx context.Context, title string) (Collection, error) {
+	row := q.db.QueryRow(ctx, createCollection, title)
+	var i Collection
+	err := row.Scan(&i.ID, &i.Title)
+	return i, err
+}
+
 const deleteCollection = `-- name: DeleteCollection :exec
 DELETE FROM collections
 WHERE id = $1
@@ -32,20 +46,6 @@ WHERE
 
 func (q *Queries) GetCollection(ctx context.Context, id int32) (Collection, error) {
 	row := q.db.QueryRow(ctx, getCollection, id)
-	var i Collection
-	err := row.Scan(&i.ID, &i.Title)
-	return i, err
-}
-
-const insertCollection = `-- name: InsertCollection :one
-INSERT INTO collections(title)
-  VALUES ($1)
-RETURNING
-  id, title
-`
-
-func (q *Queries) InsertCollection(ctx context.Context, title string) (Collection, error) {
-	row := q.db.QueryRow(ctx, insertCollection, title)
 	var i Collection
 	err := row.Scan(&i.ID, &i.Title)
 	return i, err

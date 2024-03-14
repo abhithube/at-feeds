@@ -49,7 +49,7 @@ FROM
 WHERE
   feeds.id = sqlc.arg('id');
 
--- name: UpsertFeed :one
+-- name: CreateFeed :one
 INSERT INTO feeds(url, link, title)
   VALUES (sqlc.arg('url'), sqlc.arg('link'), sqlc.arg('title'))
 ON CONFLICT (link)

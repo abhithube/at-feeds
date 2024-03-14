@@ -11,6 +11,35 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const createFeed = `-- name: CreateFeed :one
+INSERT INTO feeds(url, link, title)
+  VALUES ($1, $2, $3)
+ON CONFLICT (link)
+  DO UPDATE SET
+    url = excluded.url, title = excluded.title
+  RETURNING
+    id, url, link, title, collection_id
+`
+
+type CreateFeedParams struct {
+	Url   pgtype.Text
+	Link  string
+	Title string
+}
+
+func (q *Queries) CreateFeed(ctx context.Context, arg CreateFeedParams) (Feed, error) {
+	row := q.db.QueryRow(ctx, createFeed, arg.Url, arg.Link, arg.Title)
+	var i Feed
+	err := row.Scan(
+		&i.ID,
+		&i.Url,
+		&i.Link,
+		&i.Title,
+		&i.CollectionID,
+	)
+	return i, err
+}
+
 const deleteFeed = `-- name: DeleteFeed :exec
 DELETE FROM feeds
 WHERE id = $1
@@ -167,35 +196,6 @@ type UpdateFeedParams struct {
 
 func (q *Queries) UpdateFeed(ctx context.Context, arg UpdateFeedParams) (Feed, error) {
 	row := q.db.QueryRow(ctx, updateFeed, arg.CollectionID, arg.ID)
-	var i Feed
-	err := row.Scan(
-		&i.ID,
-		&i.Url,
-		&i.Link,
-		&i.Title,
-		&i.CollectionID,
-	)
-	return i, err
-}
-
-const upsertFeed = `-- name: UpsertFeed :one
-INSERT INTO feeds(url, link, title)
-  VALUES ($1, $2, $3)
-ON CONFLICT (link)
-  DO UPDATE SET
-    url = excluded.url, title = excluded.title
-  RETURNING
-    id, url, link, title, collection_id
-`
-
-type UpsertFeedParams struct {
-	Url   pgtype.Text
-	Link  string
-	Title string
-}
-
-func (q *Queries) UpsertFeed(ctx context.Context, arg UpsertFeedParams) (Feed, error) {
-	row := q.db.QueryRow(ctx, upsertFeed, arg.Url, arg.Link, arg.Title)
 	var i Feed
 	err := row.Scan(
 		&i.ID,

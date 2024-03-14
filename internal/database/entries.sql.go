@@ -11,17 +11,34 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const getEntry = `-- name: GetEntry :one
-SELECT
-  id, link, title, published_at, author, content, thumbnail_url
-FROM
-  entries
-WHERE
-  id = $1
+const createEntry = `-- name: CreateEntry :one
+INSERT INTO entries(link, title, published_at, author, content, thumbnail_url)
+  VALUES ($1, $2, $3, $4, $5, $6)
+ON CONFLICT (link)
+  DO UPDATE SET
+    title = excluded.title, published_at = excluded.published_at, author = excluded.author, content = excluded.content, thumbnail_url = excluded.thumbnail_url
+  RETURNING
+    id, link, title, published_at, author, content, thumbnail_url
 `
 
-func (q *Queries) GetEntry(ctx context.Context, id int32) (Entry, error) {
-	row := q.db.QueryRow(ctx, getEntry, id)
+type CreateEntryParams struct {
+	Link         string
+	Title        string
+	PublishedAt  pgtype.Timestamptz
+	Author       pgtype.Text
+	Content      pgtype.Text
+	ThumbnailUrl pgtype.Text
+}
+
+func (q *Queries) CreateEntry(ctx context.Context, arg CreateEntryParams) (Entry, error) {
+	row := q.db.QueryRow(ctx, createEntry,
+		arg.Link,
+		arg.Title,
+		arg.PublishedAt,
+		arg.Author,
+		arg.Content,
+		arg.ThumbnailUrl,
+	)
 	var i Entry
 	err := row.Scan(
 		&i.ID,
@@ -35,34 +52,17 @@ func (q *Queries) GetEntry(ctx context.Context, id int32) (Entry, error) {
 	return i, err
 }
 
-const upsertEntry = `-- name: UpsertEntry :one
-INSERT INTO entries(link, title, published_at, author, content, thumbnail_url)
-  VALUES ($1, $2, $3, $4, $5, $6)
-ON CONFLICT (link)
-  DO UPDATE SET
-    title = excluded.title, published_at = excluded.published_at, author = excluded.author, content = excluded.content, thumbnail_url = excluded.thumbnail_url
-  RETURNING
-    id, link, title, published_at, author, content, thumbnail_url
+const getEntry = `-- name: GetEntry :one
+SELECT
+  id, link, title, published_at, author, content, thumbnail_url
+FROM
+  entries
+WHERE
+  id = $1
 `
 
-type UpsertEntryParams struct {
-	Link         string
-	Title        string
-	PublishedAt  pgtype.Timestamptz
-	Author       pgtype.Text
-	Content      pgtype.Text
-	ThumbnailUrl pgtype.Text
-}
-
-func (q *Queries) UpsertEntry(ctx context.Context, arg UpsertEntryParams) (Entry, error) {
-	row := q.db.QueryRow(ctx, upsertEntry,
-		arg.Link,
-		arg.Title,
-		arg.PublishedAt,
-		arg.Author,
-		arg.Content,
-		arg.ThumbnailUrl,
-	)
+func (q *Queries) GetEntry(ctx context.Context, id int32) (Entry, error) {
+	row := q.db.QueryRow(ctx, getEntry, id)
 	var i Entry
 	err := row.Scan(
 		&i.ID,

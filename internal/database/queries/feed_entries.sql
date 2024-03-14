@@ -29,7 +29,7 @@ WHERE
   feed_id = sqlc.arg('feed_id')
   AND entry_id = sqlc.arg('entry_id');
 
--- name: UpsertFeedEntry :exec
+-- name: CreateFeedEntry :exec
 INSERT INTO feed_entries(entry_id, feed_id)
   VALUES (sqlc.arg('entry_id'), sqlc.arg('feed_id'))
 ON CONFLICT (feed_id, entry_id)
