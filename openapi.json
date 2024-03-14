@@ -29,14 +29,6 @@
             "schema": {
               "type": "integer"
             }
-          },
-          {
-            "name": "parentId",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer"
-            }
           }
         ],
         "responses": {
@@ -571,9 +563,6 @@
         "properties": {
           "title": {
             "type": "string"
-          },
-          "parentId": {
-            "type": "integer"
           }
         }
       },

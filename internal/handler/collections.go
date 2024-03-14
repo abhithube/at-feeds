@@ -11,7 +11,6 @@ import (
 )
 
 func (h *Handler) ListCollections(ctx context.Context, request api.ListCollectionsRequestObject) (api.ListCollectionsResponseObject, error) {
-	parentID := request.Params.ParentId
 	limit := request.Params.Limit
 	page := request.Params.Page
 
@@ -21,10 +20,6 @@ func (h *Handler) ListCollections(ctx context.Context, request api.ListCollectio
 		if page != nil {
 			params.Offset = (int64(*page) - 1) * params.Limit
 		}
-	}
-	if parentID != nil {
-		params.FilterByParentID = true
-		params.ParentID = parentID
 	}
 
 	result, err := h.queries.ListCollections(ctx, params)
@@ -56,28 +51,15 @@ func (h *Handler) ListCollections(ctx context.Context, request api.ListCollectio
 
 func (h *Handler) CreateCollection(ctx context.Context, request api.CreateCollectionRequestObject) (api.CreateCollectionResponseObject, error) {
 	title := request.Body.Title
-	parentID := request.Body.ParentId
-
 	if len(title) == 0 {
 		return api.CreateCollection400JSONResponse{Message: "'title' cannot be empty"}, nil
 	}
 
-	params := database.InsertCollectionParams{
-		Title: title,
-	}
-	if parentID != nil {
-		params.ParentID = sql.NullInt64{Int64: int64(*parentID), Valid: true}
-
-		_, err := h.queries.GetCollection(ctx, int64(*parentID))
-		if err != nil {
-			return api.CreateCollection400JSONResponse{Message: "Invalid parent ID"}, nil
-		}
-	}
-	result, err := h.queries.InsertCollection(ctx, params)
+	result, err := h.queries.InsertCollection(ctx, title)
 	if err != nil {
 		msg := err.Error()
 		if errors.Is(err, sql.ErrNoRows) {
-			msg = fmt.Sprintf("Collection already exists with title '%s' and parent '%d'", params.Title, params.ParentID.Int64)
+			msg = fmt.Sprintf("Collection already exists with title '%s'", title)
 		}
 
 		return api.CreateCollection400JSONResponse{Message: msg}, nil

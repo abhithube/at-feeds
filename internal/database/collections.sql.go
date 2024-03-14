@@ -7,7 +7,6 @@ package database
 
 import (
 	"context"
-	"database/sql"
 )
 
 const deleteCollection = `-- name: DeleteCollection :exec
@@ -22,7 +21,7 @@ func (q *Queries) DeleteCollection(ctx context.Context, id int64) error {
 
 const getCollection = `-- name: GetCollection :one
 SELECT
-  id, title, parent_id
+  id, title
 FROM
   collections
 WHERE
@@ -32,73 +31,48 @@ WHERE
 func (q *Queries) GetCollection(ctx context.Context, id int64) (Collection, error) {
 	row := q.db.QueryRowContext(ctx, getCollection, id)
 	var i Collection
-	err := row.Scan(&i.ID, &i.Title, &i.ParentID)
+	err := row.Scan(&i.ID, &i.Title)
 	return i, err
 }
 
 const insertCollection = `-- name: InsertCollection :one
-INSERT INTO collections(title, parent_id)
-  VALUES (?1, ?2)
-ON CONFLICT (title, parent_id)
-  DO NOTHING
+INSERT INTO collections(title)
+  VALUES (?1)
 RETURNING
-  id, title, parent_id
+  id, title
 `
 
-type InsertCollectionParams struct {
-	Title    string
-	ParentID sql.NullInt64
-}
-
-func (q *Queries) InsertCollection(ctx context.Context, arg InsertCollectionParams) (Collection, error) {
-	row := q.db.QueryRowContext(ctx, insertCollection, arg.Title, arg.ParentID)
+func (q *Queries) InsertCollection(ctx context.Context, title string) (Collection, error) {
+	row := q.db.QueryRowContext(ctx, insertCollection, title)
 	var i Collection
-	err := row.Scan(&i.ID, &i.Title, &i.ParentID)
+	err := row.Scan(&i.ID, &i.Title)
 	return i, err
 }
 
 const listCollections = `-- name: ListCollections :many
 SELECT
-  id, title, parent_id,
+  id, title,
   count(*) OVER () AS total_count
 FROM
   collections
-WHERE
-  CASE WHEN ?1 THEN
-    CASE WHEN ?2 < 0 THEN
-      parent_id IS NULL
-    ELSE
-      parent_id = ?2
-    END
-  ELSE
-    TRUE
-  END
 ORDER BY
   title ASC
-LIMIT ?4 OFFSET ?3
+LIMIT ?2 OFFSET ?1
 `
 
 type ListCollectionsParams struct {
-	FilterByParentID interface{}
-	ParentID         interface{}
-	Offset           int64
-	Limit            int64
+	Offset int64
+	Limit  int64
 }
 
 type ListCollectionsRow struct {
 	ID         int64
 	Title      string
-	ParentID   sql.NullInt64
 	TotalCount int64
 }
 
 func (q *Queries) ListCollections(ctx context.Context, arg ListCollectionsParams) ([]ListCollectionsRow, error) {
-	rows, err := q.db.QueryContext(ctx, listCollections,
-		arg.FilterByParentID,
-		arg.ParentID,
-		arg.Offset,
-		arg.Limit,
-	)
+	rows, err := q.db.QueryContext(ctx, listCollections, arg.Offset, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -106,12 +80,7 @@ func (q *Queries) ListCollections(ctx context.Context, arg ListCollectionsParams
 	var items []ListCollectionsRow
 	for rows.Next() {
 		var i ListCollectionsRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.Title,
-			&i.ParentID,
-			&i.TotalCount,
-		); err != nil {
+		if err := rows.Scan(&i.ID, &i.Title, &i.TotalCount); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

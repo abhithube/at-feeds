@@ -9,9 +9,8 @@ import (
 )
 
 type Collection struct {
-	ID       int64
-	Title    string
-	ParentID sql.NullInt64
+	ID    int64
+	Title string
 }
 
 type Entry struct {
