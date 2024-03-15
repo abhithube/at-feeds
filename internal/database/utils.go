@@ -2,7 +2,6 @@ package database
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"log"
 
@@ -11,7 +10,7 @@ import (
 
 func Rollback(ctx context.Context, tx pgx.Tx) {
 	err := tx.Rollback(ctx)
-	if !errors.Is(err, sql.ErrTxDone) {
+	if !errors.Is(err, pgx.ErrTxClosed) {
 		log.Println(err)
 	}
 }
