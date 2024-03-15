@@ -1,6 +1,6 @@
 -- name: ListCollections :many
 SELECT
-  *,
+  sqlc.embed(collections),
   count(*) OVER () AS total_count
 FROM
   collections

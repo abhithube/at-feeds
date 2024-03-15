@@ -16,6 +16,8 @@ INSERT INTO feed_entries(entry_id, feed_id)
   VALUES ($1, $2)
 ON CONFLICT (feed_id, entry_id)
   DO NOTHING
+RETURNING
+  feed_id, entry_id, has_read
 `
 
 type CreateFeedEntryParams struct {
@@ -52,7 +54,8 @@ func (q *Queries) GetFeedEntry(ctx context.Context, arg GetFeedEntryParams) (Fee
 
 const listFeedEntries = `-- name: ListFeedEntries :many
 SELECT
-  feed_id, entry_id, has_read, id, link, title, published_at, author, content, thumbnail_url,
+  e.id, e.link, e.title, e.published_at, e.author, e.content, e.thumbnail_url,
+  fe.feed_id, fe.entry_id, fe.has_read,
   count(*) OVER () AS total_count
 FROM
   feed_entries fe
@@ -83,17 +86,9 @@ type ListFeedEntriesParams struct {
 }
 
 type ListFeedEntriesRow struct {
-	FeedID       int32
-	EntryID      int32
-	HasRead      bool
-	ID           int32
-	Link         string
-	Title        string
-	PublishedAt  pgtype.Timestamptz
-	Author       pgtype.Text
-	Content      pgtype.Text
-	ThumbnailUrl pgtype.Text
-	TotalCount   int64
+	Entry      Entry
+	FeedEntry  FeedEntry
+	TotalCount int64
 }
 
 func (q *Queries) ListFeedEntries(ctx context.Context, arg ListFeedEntriesParams) ([]ListFeedEntriesRow, error) {
@@ -113,16 +108,16 @@ func (q *Queries) ListFeedEntries(ctx context.Context, arg ListFeedEntriesParams
 	for rows.Next() {
 		var i ListFeedEntriesRow
 		if err := rows.Scan(
-			&i.FeedID,
-			&i.EntryID,
-			&i.HasRead,
-			&i.ID,
-			&i.Link,
-			&i.Title,
-			&i.PublishedAt,
-			&i.Author,
-			&i.Content,
-			&i.ThumbnailUrl,
+			&i.Entry.ID,
+			&i.Entry.Link,
+			&i.Entry.Title,
+			&i.Entry.PublishedAt,
+			&i.Entry.Author,
+			&i.Entry.Content,
+			&i.Entry.ThumbnailUrl,
+			&i.FeedEntry.FeedID,
+			&i.FeedEntry.EntryID,
+			&i.FeedEntry.HasRead,
 			&i.TotalCount,
 		); err != nil {
 			return nil, err

@@ -38,25 +38,7 @@ func (h *Handler) ListFeedEntries(ctx context.Context, request api.ListFeedEntri
 
 	data := make([]api.FeedEntry, len(result))
 	for i, item := range result {
-		entry := api.FeedEntry{
-			Id:          int(item.ID),
-			Link:        item.Link,
-			Title:       item.Title,
-			PublishedAt: item.PublishedAt.Time,
-			HasRead:     item.HasRead,
-			FeedId:      int(item.FeedID),
-		}
-		if item.Author.Valid {
-			entry.Author = &item.Author.String
-		}
-		if item.Content.Valid {
-			entry.Content = &item.Content.String
-		}
-		if item.ThumbnailUrl.Valid {
-			entry.ThumbnailUrl = &item.ThumbnailUrl.String
-		}
-
-		data[i] = entry
+		data[i] = mapToAPIFeedEntry(item.Entry, item.FeedEntry)
 	}
 
 	var hasMore bool
@@ -83,7 +65,7 @@ func (h *Handler) UpdateFeedEntry(ctx context.Context, request api.UpdateFeedEnt
 		params2.HasRead.Valid = true
 	}
 
-	result, err := h.queries.UpdateFeedEntry(ctx, params2)
+	result1, err := h.queries.UpdateFeedEntry(ctx, params2)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return api.UpdateFeedEntry404JSONResponse{Message: "Entry not found"}, nil
@@ -92,27 +74,13 @@ func (h *Handler) UpdateFeedEntry(ctx context.Context, request api.UpdateFeedEnt
 		return nil, err
 	}
 
-	entryResult, err := h.queries.GetEntry(ctx, result.EntryID)
+	result2, err := h.queries.GetEntry(ctx, result1.EntryID)
 	if err != nil {
 		return nil, err
 	}
 
 	res := api.UpdateFeedEntry200JSONResponse{
-		Id:          int(entryResult.ID),
-		Link:        entryResult.Link,
-		Title:       entryResult.Title,
-		PublishedAt: entryResult.PublishedAt.Time,
-		HasRead:     result.HasRead,
-		FeedId:      request.FeedId,
-	}
-	if entryResult.Author.Valid {
-		res.Author = &entryResult.Author.String
-	}
-	if entryResult.Content.Valid {
-		res.Content = &entryResult.Content.String
-	}
-	if entryResult.ThumbnailUrl.Valid {
-		res.ThumbnailUrl = &entryResult.ThumbnailUrl.String
+		Data: mapToAPIFeedEntry(result2, result1),
 	}
 
 	return res, nil

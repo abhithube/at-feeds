@@ -1,17 +1,24 @@
 -- name: ListFeeds :many
 SELECT
-  *,
+  sqlc.embed(f),
   count(*) OVER () AS total_count,
+(
+    SELECT
+      COUNT(*)
+    FROM
+      feed_entries fe
+    WHERE
+      fe.feed_id = sqlc.arg('id')) AS total_entry_count,
 (
     SELECT
       count(*)
     FROM
       feed_entries fe
     WHERE
-      fe.feed_id = feeds.id
-      AND fe.has_read = FALSE) AS unreadCount
+      fe.feed_id = f.id
+      AND fe.has_read = FALSE) AS unread_entry_count
 FROM
-  feeds
+  feeds f
 WHERE
   CASE WHEN sqlc.arg('filter_by_collection_id') THEN
     CASE WHEN sqlc.arg('collection_id') < 0 THEN
@@ -28,14 +35,14 @@ LIMIT sqlc.narg('limit') OFFSET sqlc.arg('offset');
 
 -- name: GetFeed :one
 SELECT
-  *,
+  sqlc.embed(f),
 (
     SELECT
       COUNT(*)
     FROM
       feed_entries fe
     WHERE
-      fe.feed_id = sqlc.arg('id')) AS entryCount,
+      fe.feed_id = sqlc.arg('id')) AS total_entry_count,
 (
     SELECT
       count(*)
@@ -43,11 +50,11 @@ SELECT
       feed_entries fe
     WHERE
       fe.feed_id = sqlc.arg('id')
-      AND fe.has_read = FALSE) AS unreadCount
+      AND fe.has_read = FALSE) AS unread_entry_count
 FROM
-  feeds
+  feeds f
 WHERE
-  feeds.id = sqlc.arg('id');
+  f.id = sqlc.arg('id');
 
 -- name: CreateFeed :one
 INSERT INTO feeds(url, link, title)

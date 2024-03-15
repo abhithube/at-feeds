@@ -30,12 +30,7 @@ func (h *Handler) ListCollections(ctx context.Context, request api.ListCollectio
 
 	arr := make([]api.Collection, len(result))
 	for i, item := range result {
-		collection := api.Collection{
-			Id:    int(item.ID),
-			Title: item.Title,
-		}
-
-		arr[i] = collection
+		arr[i] = mapToAPICollection(item.Collection)
 	}
 
 	var hasMore bool
@@ -67,8 +62,7 @@ func (h *Handler) CreateCollection(ctx context.Context, request api.CreateCollec
 	}
 
 	response := api.CreateCollection201JSONResponse{
-		Id:    int(result.ID),
-		Title: result.Title,
+		Data: mapToAPICollection(result),
 	}
 
 	return response, nil

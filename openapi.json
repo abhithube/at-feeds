@@ -74,7 +74,13 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Collection"
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Collection"
+                    }
+                  }
                 }
               }
             }
@@ -164,7 +170,13 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Feed"
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Feed"
+                    }
+                  }
                 }
               }
             }
@@ -201,7 +213,13 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Feed"
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Feed"
+                    }
+                  }
                 }
               }
             }
@@ -246,7 +264,13 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Feed"
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Feed"
+                    }
+                  }
                 }
               }
             }
@@ -329,7 +353,13 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/FeedEntry"
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/FeedEntry"
+                    }
+                  }
                 }
               }
             }
@@ -483,7 +513,7 @@
       },
       "Feed": {
         "type": "object",
-        "required": ["id", "link", "title", "unreadCount"],
+        "required": ["id", "url", "link", "title"],
         "properties": {
           "id": {
             "type": "integer"
@@ -500,10 +530,10 @@
           "title": {
             "type": "string"
           },
-          "entryCount": {
+          "totalEntryCount": {
             "type": "integer"
           },
-          "unreadCount": {
+          "unreadEntryCount": {
             "type": "integer"
           }
         }

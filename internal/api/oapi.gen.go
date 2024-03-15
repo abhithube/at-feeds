@@ -41,12 +41,12 @@ type Error struct {
 
 // Feed defines model for Feed.
 type Feed struct {
-	EntryCount  *int    `json:"entryCount,omitempty"`
-	Id          int     `json:"id"`
-	Link        string  `json:"link"`
-	Title       string  `json:"title"`
-	UnreadCount int     `json:"unreadCount"`
-	Url         *string `json:"url"`
+	Id               int     `json:"id"`
+	Link             string  `json:"link"`
+	Title            string  `json:"title"`
+	TotalEntryCount  *int    `json:"totalEntryCount,omitempty"`
+	UnreadEntryCount *int    `json:"unreadEntryCount,omitempty"`
+	Url              *string `json:"url"`
 }
 
 // FeedEntry defines model for FeedEntry.
@@ -616,7 +616,9 @@ type CreateCollectionResponseObject interface {
 	VisitCreateCollectionResponse(w http.ResponseWriter) error
 }
 
-type CreateCollection201JSONResponse Collection
+type CreateCollection201JSONResponse struct {
+	Data Collection `json:"data"`
+}
 
 func (response CreateCollection201JSONResponse) VisitCreateCollectionResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
@@ -682,7 +684,9 @@ type CreateFeedResponseObject interface {
 	VisitCreateFeedResponse(w http.ResponseWriter) error
 }
 
-type CreateFeed201JSONResponse Feed
+type CreateFeed201JSONResponse struct {
+	Data Feed `json:"data"`
+}
 
 func (response CreateFeed201JSONResponse) VisitCreateFeedResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
@@ -770,7 +774,9 @@ type UpdateFeedEntryResponseObject interface {
 	VisitUpdateFeedEntryResponse(w http.ResponseWriter) error
 }
 
-type UpdateFeedEntry200JSONResponse FeedEntry
+type UpdateFeedEntry200JSONResponse struct {
+	Data FeedEntry `json:"data"`
+}
 
 func (response UpdateFeedEntry200JSONResponse) VisitUpdateFeedEntryResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
@@ -821,7 +827,9 @@ type GetFeedResponseObject interface {
 	VisitGetFeedResponse(w http.ResponseWriter) error
 }
 
-type GetFeed200JSONResponse Feed
+type GetFeed200JSONResponse struct {
+	Data Feed `json:"data"`
+}
 
 func (response GetFeed200JSONResponse) VisitGetFeedResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
@@ -848,7 +856,9 @@ type UpdateFeedResponseObject interface {
 	VisitUpdateFeedResponse(w http.ResponseWriter) error
 }
 
-type UpdateFeed200JSONResponse Feed
+type UpdateFeed200JSONResponse struct {
+	Data Feed `json:"data"`
+}
 
 func (response UpdateFeed200JSONResponse) VisitUpdateFeedResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")

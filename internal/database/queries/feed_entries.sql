@@ -1,6 +1,7 @@
 -- name: ListFeedEntries :many
 SELECT
-  *,
+  sqlc.embed(e),
+  sqlc.embed(fe),
   count(*) OVER () AS total_count
 FROM
   feed_entries fe
@@ -33,7 +34,9 @@ WHERE
 INSERT INTO feed_entries(entry_id, feed_id)
   VALUES (sqlc.arg('entry_id'), sqlc.arg('feed_id'))
 ON CONFLICT (feed_id, entry_id)
-  DO NOTHING;
+  DO NOTHING
+RETURNING
+  *;
 
 -- name: UpdateFeedEntry :one
 UPDATE

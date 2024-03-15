@@ -23,10 +23,10 @@ func (j *RefreshJob) Run(ctx context.Context) {
 	}
 
 	urls := make([]string, len(feeds))
-	for i, feed := range feeds {
-		urls[i] = feed.Link
-		if feed.Url.Valid {
-			urls[i] = feed.Url.String
+	for i, item := range feeds {
+		urls[i] = item.Feed.Link
+		if item.Feed.Url.Valid {
+			urls[i] = item.Feed.Url.String
 		}
 	}
 

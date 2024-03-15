@@ -53,7 +53,7 @@ func (q *Queries) GetCollection(ctx context.Context, id int32) (Collection, erro
 
 const listCollections = `-- name: ListCollections :many
 SELECT
-  id, title,
+  collections.id, collections.title,
   count(*) OVER () AS total_count
 FROM
   collections
@@ -68,8 +68,7 @@ type ListCollectionsParams struct {
 }
 
 type ListCollectionsRow struct {
-	ID         int32
-	Title      string
+	Collection Collection
 	TotalCount int64
 }
 
@@ -82,7 +81,7 @@ func (q *Queries) ListCollections(ctx context.Context, arg ListCollectionsParams
 	var items []ListCollectionsRow
 	for rows.Next() {
 		var i ListCollectionsRow
-		if err := rows.Scan(&i.ID, &i.Title, &i.TotalCount); err != nil {
+		if err := rows.Scan(&i.Collection.ID, &i.Collection.Title, &i.TotalCount); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

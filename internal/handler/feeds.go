@@ -36,17 +36,7 @@ func (h *Handler) ListFeeds(ctx context.Context, request api.ListFeedsRequestObj
 
 	arr := make([]api.Feed, len(result))
 	for i, item := range result {
-		feed := api.Feed{
-			Id:          int(item.ID),
-			Link:        item.Link,
-			Title:       item.Title,
-			UnreadCount: int(item.Unreadcount),
-		}
-		if item.Url.Valid {
-			feed.Url = &item.Url.String
-		}
-
-		arr[i] = feed
+		arr[i] = mapToAPIFeed(item.Feed, &item.TotalEntryCount, &item.UnreadEntryCount)
 	}
 
 	var hasMore bool
@@ -71,16 +61,8 @@ func (h *Handler) GetFeed(ctx context.Context, request api.GetFeedRequestObject)
 		return nil, err
 	}
 
-	entryCount := int(result.Entrycount)
 	response := api.GetFeed200JSONResponse{
-		Id:          int(result.ID),
-		Link:        result.Link,
-		Title:       result.Title,
-		EntryCount:  &entryCount,
-		UnreadCount: int(result.Unreadcount),
-	}
-	if result.Url.Valid {
-		response.Url = &result.Url.String
+		Data: mapToAPIFeed(result.Feed, &result.TotalEntryCount, &result.UnreadEntryCount),
 	}
 
 	return response, nil
@@ -93,12 +75,7 @@ func (h *Handler) CreateFeed(ctx context.Context, request api.CreateFeedRequestO
 	}
 
 	response := api.CreateFeed201JSONResponse{
-		Id:    int(result.ID),
-		Link:  result.Link,
-		Title: result.Title,
-	}
-	if result.Url.Valid {
-		response.Url = &result.Url.String
+		Data: mapToAPIFeed(*result, nil, nil),
 	}
 
 	return response, nil
@@ -125,12 +102,7 @@ func (h *Handler) UpdateFeed(ctx context.Context, request api.UpdateFeedRequestO
 	}
 
 	response := api.UpdateFeed200JSONResponse{
-		Id:    int(result.ID),
-		Link:  result.Link,
-		Title: result.Title,
-	}
-	if result.Url.Valid {
-		response.Url = &result.Url.String
+		Data: mapToAPIFeed(result, nil, nil),
 	}
 
 	return response, nil
@@ -170,9 +142,9 @@ func (h *Handler) ImportFeeds(ctx context.Context, request api.ImportFeedsReques
 	}
 
 	feedMap := make(map[string]struct{})
-	for _, feed := range result {
-		if feed.Url.Valid {
-			feedMap[feed.Url.String] = struct{}{}
+	for _, item := range result {
+		if item.Feed.Url.Valid {
+			feedMap[item.Feed.Url.String] = struct{}{}
 		}
 	}
 
@@ -198,15 +170,15 @@ func (h *Handler) ExportFeeds(ctx context.Context, _ api.ExportFeedsRequestObjec
 	}
 
 	items := make([]backup.Item, len(result))
-	for i, feed := range result {
-		if !feed.Url.Valid {
+	for i, item := range result {
+		if !item.Feed.Url.Valid {
 			continue
 		}
 
 		item := backup.Item{
-			URL:   feed.Url.String,
-			Link:  feed.Link,
-			Title: feed.Title,
+			URL:   item.Feed.Url.String,
+			Link:  item.Feed.Link,
+			Title: item.Feed.Title,
 		}
 		items[i] = item
 	}

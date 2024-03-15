@@ -52,14 +52,14 @@ func (q *Queries) DeleteFeed(ctx context.Context, id int32) error {
 
 const getFeed = `-- name: GetFeed :one
 SELECT
-  id, url, link, title, collection_id,
+  f.id, f.url, f.link, f.title, f.collection_id,
 (
     SELECT
       COUNT(*)
     FROM
       feed_entries fe
     WHERE
-      fe.feed_id = $1) AS entryCount,
+      fe.feed_id = $1) AS total_entry_count,
 (
     SELECT
       count(*)
@@ -67,68 +67,72 @@ SELECT
       feed_entries fe
     WHERE
       fe.feed_id = $1
-      AND fe.has_read = FALSE) AS unreadCount
+      AND fe.has_read = FALSE) AS unread_entry_count
 FROM
-  feeds
+  feeds f
 WHERE
-  feeds.id = $1
+  f.id = $1
 `
 
 type GetFeedRow struct {
-	ID           int32
-	Url          pgtype.Text
-	Link         string
-	Title        string
-	CollectionID pgtype.Int4
-	Entrycount   int64
-	Unreadcount  int64
+	Feed             Feed
+	TotalEntryCount  int64
+	UnreadEntryCount int64
 }
 
 func (q *Queries) GetFeed(ctx context.Context, id int32) (GetFeedRow, error) {
 	row := q.db.QueryRow(ctx, getFeed, id)
 	var i GetFeedRow
 	err := row.Scan(
-		&i.ID,
-		&i.Url,
-		&i.Link,
-		&i.Title,
-		&i.CollectionID,
-		&i.Entrycount,
-		&i.Unreadcount,
+		&i.Feed.ID,
+		&i.Feed.Url,
+		&i.Feed.Link,
+		&i.Feed.Title,
+		&i.Feed.CollectionID,
+		&i.TotalEntryCount,
+		&i.UnreadEntryCount,
 	)
 	return i, err
 }
 
 const listFeeds = `-- name: ListFeeds :many
 SELECT
-  id, url, link, title, collection_id,
+  f.id, f.url, f.link, f.title, f.collection_id,
   count(*) OVER () AS total_count,
+(
+    SELECT
+      COUNT(*)
+    FROM
+      feed_entries fe
+    WHERE
+      fe.feed_id = $1) AS total_entry_count,
 (
     SELECT
       count(*)
     FROM
       feed_entries fe
     WHERE
-      fe.feed_id = feeds.id
-      AND fe.has_read = FALSE) AS unreadCount
+      fe.feed_id = f.id
+      AND fe.has_read = FALSE) AS unread_entry_count
 FROM
-  feeds
+  feeds f
 WHERE
-  CASE WHEN $1 THEN
-    CASE WHEN $2 < 0 THEN
+  CASE WHEN $2 THEN
+    CASE WHEN $3 < 0 THEN
       collection_id IS NULL
     ELSE
-      collection_id = $2
+      collection_id = $3
     END
   ELSE
     TRUE
   END
 ORDER BY
   title ASC
-LIMIT $4 OFFSET $3
+LIMIT $5 OFFSET $4
 `
 
 type ListFeedsParams struct {
+	ID                   int32
 	FilterByCollectionID interface{}
 	CollectionID         interface{}
 	Offset               int32
@@ -136,17 +140,15 @@ type ListFeedsParams struct {
 }
 
 type ListFeedsRow struct {
-	ID           int32
-	Url          pgtype.Text
-	Link         string
-	Title        string
-	CollectionID pgtype.Int4
-	TotalCount   int64
-	Unreadcount  int64
+	Feed             Feed
+	TotalCount       int64
+	TotalEntryCount  int64
+	UnreadEntryCount int64
 }
 
 func (q *Queries) ListFeeds(ctx context.Context, arg ListFeedsParams) ([]ListFeedsRow, error) {
 	rows, err := q.db.Query(ctx, listFeeds,
+		arg.ID,
 		arg.FilterByCollectionID,
 		arg.CollectionID,
 		arg.Offset,
@@ -160,13 +162,14 @@ func (q *Queries) ListFeeds(ctx context.Context, arg ListFeedsParams) ([]ListFee
 	for rows.Next() {
 		var i ListFeedsRow
 		if err := rows.Scan(
-			&i.ID,
-			&i.Url,
-			&i.Link,
-			&i.Title,
-			&i.CollectionID,
+			&i.Feed.ID,
+			&i.Feed.Url,
+			&i.Feed.Link,
+			&i.Feed.Title,
+			&i.Feed.CollectionID,
 			&i.TotalCount,
-			&i.Unreadcount,
+			&i.TotalEntryCount,
+			&i.UnreadEntryCount,
 		); err != nil {
 			return nil, err
 		}
