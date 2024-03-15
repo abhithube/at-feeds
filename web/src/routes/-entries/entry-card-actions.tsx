@@ -31,7 +31,7 @@ export function EntryCardActions({ entry }: EntryCardActionsProps) {
       return res.data
     },
     onSuccess: (data) => {
-      setRead(data.hasRead)
+      setRead(data.data.hasRead)
     },
   })
 

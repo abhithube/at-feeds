@@ -43,12 +43,12 @@ export interface components {
     Feed: {
       id: number;
       /** Format: uri */
-      url?: string | null;
+      url: string | null;
       /** Format: uri */
       link: string;
       title: string;
-      entryCount?: number;
-      unreadCount: number;
+      totalEntryCount?: number;
+      unreadEntryCount?: number;
     };
     FeedEntry: {
       id: number;
@@ -125,7 +125,9 @@ export interface operations {
       /** @description Collection response */
       201: {
         content: {
-          "application/json": components["schemas"]["Collection"];
+          "application/json": {
+            data: components["schemas"]["Collection"];
+          };
         };
       };
       /** @description Invalid collection response */
@@ -166,7 +168,9 @@ export interface operations {
       /** @description Feed response */
       201: {
         content: {
-          "application/json": components["schemas"]["Feed"];
+          "application/json": {
+            data: components["schemas"]["Feed"];
+          };
         };
       };
       /** @description Invalid feed response */
@@ -187,7 +191,9 @@ export interface operations {
       /** @description Feed response */
       200: {
         content: {
-          "application/json": components["schemas"]["Feed"];
+          "application/json": {
+            data: components["schemas"]["Feed"];
+          };
         };
       };
       /** @description Feed not found */
@@ -232,7 +238,9 @@ export interface operations {
       /** @description Updated feed */
       200: {
         content: {
-          "application/json": components["schemas"]["Feed"];
+          "application/json": {
+            data: components["schemas"]["Feed"];
+          };
         };
       };
       /** @description Feed not found */
@@ -259,7 +267,9 @@ export interface operations {
       /** @description Updated feed entry */
       200: {
         content: {
-          "application/json": components["schemas"]["FeedEntry"];
+          "application/json": {
+            data: components["schemas"]["FeedEntry"];
+          };
         };
       };
       /** @description Entry not found */

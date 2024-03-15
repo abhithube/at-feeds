@@ -61,7 +61,7 @@ export const feedQueryOptions = (id: number) =>
         },
       })
 
-      return res.data!
+      return res.data!.data
     },
   })
 

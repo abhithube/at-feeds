@@ -33,11 +33,11 @@ export function FeedItem({ feed }: FeedItemProps) {
         <span
           className={cn(
             'tabular-nums text-muted-foreground group-hover:hidden group-[.active]:text-secondary',
-            feed.unreadCount === 0 && 'hidden',
+            feed.unreadEntryCount === 0 && 'hidden',
             open && 'hidden',
           )}
         >
-          {feed.unreadCount}
+          {feed.unreadEntryCount}
         </span>
         <FeedActions open={open} setOpen={setOpen} />
       </div>

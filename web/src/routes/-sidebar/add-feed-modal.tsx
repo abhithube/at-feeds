@@ -69,7 +69,7 @@ export function AddFeedModal() {
       navigate({
         to: '/feeds/$feedId',
         params: {
-          feedId: data.id.toString(),
+          feedId: data.data.id.toString(),
         },
       })
     },
